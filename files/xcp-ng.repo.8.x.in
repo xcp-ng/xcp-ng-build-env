@@ -19,6 +19,13 @@ enabled=0
 gpgcheck=0
 priority=1
 
+[xcp-ng-staging]
+name=XCP-ng Staging Repository
+baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/staging/x86_64/
+enabled=0
+gpgcheck=0
+priority=1
+
 # Source repositories
 
 [xcp-ng-base-src]
@@ -38,6 +45,13 @@ priority=1
 [xcp-ng-testing-src]
 name=XCP-ng Testing Source Repository
 baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/testing/Source/
+enabled=0
+gpgcheck=0
+priority=1
+
+[xcp-ng-staging-src]
+name=XCP-ng Staging Source Repository
+baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/staging/Source/
 enabled=0
 gpgcheck=0
 priority=1
