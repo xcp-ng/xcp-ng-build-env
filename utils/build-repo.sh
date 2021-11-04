@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# This script is intended to called from inside a git repo by travis.
-# It will download travis-build-repo-internal.sh and run.py, launch a
+# This script is intended to called from inside a git repo by github workflows.
+# It will download build-repo-internal.sh and run.py, launch a
 # xcp-ng-build-env container with the git repo mounted, and will finally
-# run the script travis-build-repo-internal.sh inside the container.
+# run the script build-repo-internal.sh inside the container.
 #
-# travis-build-repo.sh makes use of the following environment variables:
+# build-repo.sh makes use of the following environment variables:
 # $CONTAINER_NAME (option - default 'build-env')
 # - The name to use for the container. Useful if you want to copy build
 #   artifacts out of the container once the build is finished.
@@ -29,17 +29,17 @@ set -eux
 CONTAINER_NAME=${CONTAINER_NAME:-build-env}
 BUILDENV_USER=${BUILDENV_USER:-xcp-ng}
 BUILDENV_BRANCH=${BUILDENV_BRANCH:-master}
-GIT_BRANCH=${GIT_BRANCH:-$TRAVIS_BRANCH}
+GIT_BRANCH=${GIT_BRANCH:-${GITHUB_REF##*/}}
 
 BASE_URL=https://raw.githubusercontent.com/${BUILDENV_USER}/xcp-ng-build-env/${BUILDENV_BRANCH}
 
 RUN_SCRIPT=run.py
-BUILD_SCRIPT=travis-build-repo-internal.sh
+BUILD_SCRIPT=build-repo-internal.sh
 
-[ -f ${RUN_SCRIPT} ] || wget ${BASE_URL}/${RUN_SCRIPT}
-[ -f ${BUILD_SCRIPT} ] || wget ${BASE_URL}/utils/${BUILD_SCRIPT}
+[ -f ${RUN_SCRIPT} ] || wget "${BASE_URL}/${RUN_SCRIPT}"
+[ -f ${BUILD_SCRIPT} ] || wget "${BASE_URL}/utils/${BUILD_SCRIPT}"
 
-REPO=`basename $PWD`
+REPO=$(basename "$PWD")
 REPO_PATH=/repos/$REPO
 
 REPO_CONFIGURE_CMD=${REPO_CONFIGURE_CMD-./configure}
@@ -47,7 +47,7 @@ REPO_BUILD_CMD=${REPO_BUILD_CMD-make}
 REPO_TEST_CMD=${REPO_TEST_CMD-make test}
 REPO_DOC_CMD=${REPO_DOC_CMD-}
 
-python run.py -p $REPO_PACKAGE_NAME --name ${CONTAINER_NAME} \
+python run.py -p "$REPO_PACKAGE_NAME" --name "${CONTAINER_NAME}" \
     --fail-on-error \
     -b "${TARGET_XCP_NG_VERSION}" \
     -e "REPO_CONFIGURE_CMD=$REPO_CONFIGURE_CMD" \
@@ -55,5 +55,5 @@ python run.py -p $REPO_PACKAGE_NAME --name ${CONTAINER_NAME} \
     -e "REPO_TEST_CMD=$REPO_TEST_CMD" \
     -e "REPO_DOC_CMD=$REPO_DOC_CMD" \
     -e "GIT_BRANCH=$GIT_BRANCH" \
-    -v $PWD:$REPO_PATH \
-    bash -l $REPO_PATH/travis-build-repo-internal.sh $REPO_PATH
+    -v "$PWD:$REPO_PATH" \
+    bash -l "$REPO_PATH"/build-repo-internal.sh "$REPO_PATH"
