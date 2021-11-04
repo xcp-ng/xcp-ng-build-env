@@ -1,9 +1,7 @@
-#!/usr/bin/python2
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-"""
-Thin wrapper around "docker run" which simplifies the creation of a build
-environment for XCP-ng packages.
-"""
+""" Thin wrapper around "docker run" which simplifies the creation of a build environment for XCP-ng packages. """
 
 import argparse
 import os
@@ -19,9 +17,7 @@ DEFAULT_BRANCH = '8.0'
 
 
 def make_mount_dir():
-    """
-    Make a randomly-named directory under SRPMS_MOUNT_ROOT.
-    """
+    """ Make a randomly-named directory under SRPMS_MOUNT_ROOT. """
     srpm_mount_dir = os.path.join(SRPMS_MOUNT_ROOT, str(uuid.uuid4()))
     try:
         os.makedirs(srpm_mount_dir)
@@ -31,18 +27,14 @@ def make_mount_dir():
 
 
 def copy_srpms(srpm_mount_dir, srpms):
-    """
-    Copy each SRPM into the mount directory.
-    """
+    """ Copy each SRPM into the mount directory. """
     for srpm in srpms:
         srpm_name = os.path.basename(srpm)
         shutil.copyfile(srpm, os.path.join(srpm_mount_dir, srpm_name))
 
 
 def main():
-    """
-    Main entry point.
-    """
+    """ Main entry point. """
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--branch',
                         help='XCP-ng version: 7.6, %s, etc. If not set, '
@@ -149,7 +141,7 @@ def main():
     if args.dir:
         for localdir in args.dir:
             if not os.path.isdir(localdir):
-                print "Local directory argument is not a directory!"
+                print("Local directory argument is not a directory!")
                 sys.exit(1)
             ext_path = os.path.abspath(localdir)
             int_path = os.path.basename(ext_path)
@@ -166,11 +158,11 @@ def main():
     # exec "docker run"
     docker_args += ["%s:%s" % (CONTAINER_PREFIX, branch),
                     "/usr/local/bin/init-container.sh"]
-    print >> sys.stderr, "Launching docker with args %s" % docker_args
+    print("Launching docker with args %s" % docker_args, file=sys.stderr)
     return_code = subprocess.call(docker_args)
 
     if srpm_mount_dir:
-        print "Cleaning up temporary mount directory"
+        print("Cleaning up temporary mount directory")
         shutil.rmtree(srpm_mount_dir)
 
     sys.exit(return_code)
