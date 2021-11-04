@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-if [ -z $1 ]; then
+if [ -z "$1" ]; then
     echo "Usage: $0 {version}"
     echo "... where {version} is a 'x.y' version such as 8.0."
     exit
@@ -40,8 +40,8 @@ CUSTOM_UID="$(id -u)"
 CUSTOM_GID="$(id -g)"
 
 if [ "${CUSTOM_UID}" -eq 0 ] || [ "${CUSTOM_GID}" -eq 0 ]; then
-  if [ -z "${SUDO_GID}" ] || [ -z "${SUDO_UID}" ] || [ -z ${SUDO_USER} ] || \
-     [ -z "${SUDO_COMMAND}" ] || [ "${SUDO_GID}" -eq 0 ] || [ ${SUDO_UID} -eq 0 ]; then
+  if [ -z "${SUDO_GID}" ] || [ -z "${SUDO_UID}" ] || [ -z "${SUDO_USER}" ] || \
+     [ -z "${SUDO_COMMAND}" ] || [ "${SUDO_GID}" -eq 0 ] || [ "${SUDO_UID}" -eq 0 ]; then
     echo -e "[ERROR] This operation cannot be performed by the 'root' user directly:"
     echo -e "\tplease use an unprivileged user (eventually with 'sudo')"
     exit 1
