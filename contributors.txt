@@ -1,8 +1,0 @@
-People who have contributed to xcp-ng-build-env:
-
-David Scott <dave.scott@citrix.com>
-John Else <john.else@citrix.com>
-Jon Ludlam <jonathan.ludlam@citrix.com>
-Rob Hoes <rob.hoes@citrix.com>
-Si Beaumont <simon.beaumont@citrix.com>
-Samuel Verschelde <stormi-xcp@ylix.fr>
