@@ -4,24 +4,16 @@ set -eux
 
 TARGET_XCP_NG_VERSION="8.2"
 
-./build.sh "${TARGET_XCP_NG_VERSION}"
+./build.sh "$TARGET_XCP_NG_VERSION"
 
-PACKAGE=emu-manager
-REPO=xcp-emu-manager
+REPOS=xcp-emu-manager
 
-git clone git://github.com/xcp-ng/$REPO /tmp/$REPO
+for REPO in ${REPOS}; do
+    REPO_PATH=/tmp/"$REPO"
+    git clone --branch "$TARGET_XCP_NG_VERSION" git://github.com/xcp-ng-rpms/"$REPO" "$REPO_PATH"
 
-cp \
-    run.py \
-    utils/build-repo.sh \
-    utils/build-repo-internal.sh \
-    /tmp/$REPO
+    TARGET_XCP_NG_VERSION="$TARGET_XCP_NG_VERSION" \
+        bash utils/build-repo.sh "$REPO_PATH"
 
-cd /tmp/$REPO
-
-REPO_PACKAGE_NAME=$PACKAGE \
-    REPO_CONFIGURE_CMD=true \
-    REPO_BUILD_CMD=make \
-    REPO_TEST_CMD=true \
-    TARGET_XCP_NG_VERSION="${TARGET_XCP_NG_VERSION}" \
-    bash build-repo.sh
+    rm -rf "$REPO_PATH"
+done
