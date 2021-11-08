@@ -6,6 +6,8 @@ if [ -z "$1" ]; then
     exit
 fi
 
+cd $(dirname "$0")
+
 CUSTOM_ARGS=()
 
 DEFAULT_VERSION="8.2"
