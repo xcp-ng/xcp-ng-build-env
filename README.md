@@ -16,12 +16,22 @@ want.
 You'll need to install docker. Follow the instructions for your platform on
 https://www.docker.com/
 
-It's assumed selinux isn't configured. You'll need to at least enable permissive mode
+### selinux
+It's assumed selinux isn't enforcing. You'll need to at least enable permissive mode
 https://docs.fedoraproject.org/en-US/quick-docs/changing-selinux-states-and-modes/#selinux-changing-to-permissive-mode
 ```
 getenforce
 setenforce 0
 getenforce
+```
+If you are doing this after the fact, you also likely need to recreate the image(s) already created using build.sh
+```
+docker image ls
+docker image rm <image-id-of-eg: xcp-ng/xcp-ng-build-env>
+```
+These will manifest as:
+```
+error: failed to create directory %{_builddir}: /home/builder/rpmbuild/BUILD: Permission denied
 ```
 
 ## Building the docker image(s)
