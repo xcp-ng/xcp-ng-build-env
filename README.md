@@ -16,6 +16,14 @@ want.
 You'll need to install docker. Follow the instructions for your platform on
 https://www.docker.com/
 
+It's assumed selinux isn't configured. You'll need to at least enable permissive mode
+https://docs.fedoraproject.org/en-US/quick-docs/changing-selinux-states-and-modes/#selinux-changing-to-permissive-mode
+```
+getenforce
+setenforce 0
+getenforce
+```
+
 ## Building the docker image(s)
 
 You need one docker image per target version of XCP-ng.
