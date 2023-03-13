@@ -15,7 +15,14 @@ priority=1
 [xcp-ng-testing]
 name=XCP-ng Testing Repository
 baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/testing/x86_64/
-enabled=0
+enabled=1
+gpgcheck=0
+priority=1
+
+[xcp-ng-ci]
+name=XCP-ng CI Repository
+baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/ci/x86_64/
+enabled=1
 gpgcheck=0
 priority=1
 
@@ -45,7 +52,14 @@ priority=1
 [xcp-ng-testing-src]
 name=XCP-ng Testing Source Repository
 baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/testing/Source/
-enabled=0
+enabled=1
+gpgcheck=0
+priority=1
+
+[xcp-ng-ci-src]
+name=XCP-ng CI Source Repository
+baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/ci/Source/
+enabled=1
 gpgcheck=0
 priority=1
 
