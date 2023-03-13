@@ -79,7 +79,10 @@ def main():
     parser.add_argument('-a', '--enablerepo',
                         help='additional repositories to enable before installing build dependencies. '
                              'Same syntax as yum\'s --enablerepo parameter. Available additional repositories: '
-                             'xcp-ng-updates_testing, xcp-ng-extras, xcp-ng-extras_testing.')
+                             'check files/xcp-ng.repo.*.x.in.')
+    parser.add_argument('--disablerepo',
+                        help='disable repositories. Same syntax as yum\'s --disablerepo parameter. '
+                             'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
     parser.add_argument('--fail-on-error', action='store_true',
                         help='If container initialisation fails, exit rather than dropping the user '
                              'into a command shell')
@@ -154,6 +157,8 @@ def main():
             docker_args += ["-e", env]
     if args.enablerepo:
         docker_args += ["-e", "ENABLEREPO=%s" % args.enablerepo]
+    if args.disablerepo:
+        docker_args += ["-e", "DISABLEREPO=%s" % args.disablerepo]
 
     # exec "docker run"
     docker_args += ["%s:%s" % (CONTAINER_PREFIX, branch),
