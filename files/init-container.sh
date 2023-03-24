@@ -7,6 +7,11 @@ fi
 # clean yum cache to avoid download errors
 sudo yum clean all
 
+# disable repositories if needed
+if [ -n "$DISABLEREPO" ]; then
+    sudo yum-config-manager --disable "$DISABLEREPO"
+fi
+
 # enable additional repositories if needed
 if [ -n "$ENABLEREPO" ]; then
     sudo yum-config-manager --enable "$ENABLEREPO"
