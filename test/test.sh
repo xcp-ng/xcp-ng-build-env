@@ -12,7 +12,7 @@ CONTAINER_NAME=${CONTAINER_NAME:-build-env}
 
 for REPO in ${REPOS}; do
     REPO_PATH=/tmp/"$REPO"
-    git clone --branch "$TARGET_XCP_NG_VERSION" git://github.com/xcp-ng-rpms/"$REPO" "$REPO_PATH"
+    git clone --branch "$TARGET_XCP_NG_VERSION" https://github.com/xcp-ng-rpms/"$REPO" "$REPO_PATH"
 
     ./run.py --name "$CONTAINER_NAME" \
         --fail-on-error \
