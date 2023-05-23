@@ -14,7 +14,7 @@ CONTAINER_PREFIX = "xcp-ng/xcp-ng-build-env"
 SRPMS_MOUNT_ROOT = "/tmp/docker-SRPMS"
 
 DEFAULT_BRANCH = '8.3'
-
+DEFAULT_ULIMIT_NOFILE = 1024
 
 def make_mount_dir():
     """ Make a randomly-named directory under SRPMS_MOUNT_ROOT. """
@@ -76,6 +76,8 @@ def main():
     parser.add_argument('--syslog', action='store_true',
                         help='Enable syslog to host by mounting in /dev/log')
     parser.add_argument('--name', help='Assign a name to the container')
+    parser.add_argument('--ulimit', action='append',
+                        help='Ulimit options passed directly to docker run')
     parser.add_argument('-a', '--enablerepo',
                         help='additional repositories to enable before installing build dependencies. '
                              'Same syntax as yum\'s --enablerepo parameter. Available additional repositories: '
@@ -159,6 +161,14 @@ def main():
         docker_args += ["-e", "ENABLEREPO=%s" % args.enablerepo]
     if args.disablerepo:
         docker_args += ["-e", "DISABLEREPO=%s" % args.disablerepo]
+    ulimit_nofile = False
+    if args.ulimit:
+        for ulimit in args.ulimit:
+            if ulimit.startswith('nofile='):
+                ulimit_nofile = True
+            docker_args += ["--ulimit", ulimit]
+    if ulimit_nofile == False:
+        docker_args += ["--ulimit", 'nofile='+str(DEFAULT_ULIMIT_NOFILE)]
 
     # exec "docker run"
     docker_args += ["%s:%s" % (CONTAINER_PREFIX, branch),
