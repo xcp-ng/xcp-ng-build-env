@@ -62,6 +62,7 @@ CUSTOM_ARGS+=( "--build-arg" "CUSTOM_BUILDER_GID=${CUSTOM_GID}" )
 docker build \
     $(echo "${CUSTOM_ARGS[@]}") \
     -t xcp-ng/xcp-ng-build-env:${1} \
+    --ulimit nofile=1024 \
     -f Dockerfile-${MAJOR}.x .
 
 rm -f files/tmp-xcp-ng.repo
