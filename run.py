@@ -167,8 +167,8 @@ def main():
             if ulimit.startswith('nofile='):
                 ulimit_nofile = True
             docker_args += ["--ulimit", ulimit]
-    if ulimit_nofile == False:
-        docker_args += ["--ulimit", 'nofile='+str(DEFAULT_ULIMIT_NOFILE)]
+    if not ulimit_nofile:
+        docker_args += ["--ulimit", "nofile=%s" % DEFAULT_ULIMIT_NOFILE]
 
     # exec "docker run"
     docker_args += ["%s:%s" % (CONTAINER_PREFIX, branch),
