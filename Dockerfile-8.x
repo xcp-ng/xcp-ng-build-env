@@ -13,6 +13,9 @@ COPY    files/tmp-CentOS-Vault.repo /etc/yum.repos.d/CentOS-Vault-7.5.repo
 # Repository file depends on the target version of XCP-ng, and is pre-processed by build.sh
 COPY    files/tmp-xcp-ng.repo /etc/yum.repos.d/xcp-ng.repo
 
+# Install GPG key
+RUN     curl -sSf https://xcp-ng.org/RPM-GPG-KEY-xcpng -o /etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
+
 # Fix invalid rpmdb checksum error with overlayfs, see https://github.com/docker/docker/issues/10180
 # (still needed?)
 RUN     yum install -y yum-plugin-ovl
@@ -29,8 +32,6 @@ RUN     yum install -y \
             gcc-c++ \
             git \
             make \
-            mercurial \
-            mock \
             rpm-build \
             rpm-python \
             sudo \
@@ -61,8 +62,7 @@ RUN     bash -c ' \
             fi; \
         ' \
         && echo "builder:builder" | chpasswd \
-        && echo "builder ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers \
-        && usermod -G mock builder
+        && echo "builder ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 RUN     mkdir -p /usr/local/bin
 COPY    files/init-container.sh /usr/local/bin/init-container.sh
