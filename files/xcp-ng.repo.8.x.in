@@ -2,35 +2,54 @@
 name=XCP-ng Base Repository
 baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/base/x86_64/
 enabled=1
-gpgcheck=0
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 priority=1
 
 [xcp-ng-updates]
 name=XCP-ng Updates Repository
 baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/updates/x86_64/
 enabled=1
-gpgcheck=0
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
+priority=1
+
+[xcp-ng-candidates]
+name=XCP-ng Candidates Repository
+baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/candidates/x86_64/
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 priority=1
 
 [xcp-ng-testing]
 name=XCP-ng Testing Repository
 baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/testing/x86_64/
 enabled=1
-gpgcheck=0
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 priority=1
 
 [xcp-ng-ci]
 name=XCP-ng CI Repository
 baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/ci/x86_64/
 enabled=1
-gpgcheck=0
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 priority=1
 
-[xcp-ng-staging]
-name=XCP-ng Staging Repository
-baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/staging/x86_64/
+[xcp-ng-incoming]
+name=XCP-ng Incoming Repository
+baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/incoming/x86_64/
 enabled=0
-gpgcheck=0
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 priority=1
 
 # Source repositories
@@ -39,33 +58,61 @@ priority=1
 name=XCP-ng Base Source Repository
 baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/base/Source/
 enabled=1
-gpgcheck=0
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 priority=1
 
 [xcp-ng-updates-src]
 name=XCP-ng Updates Source Repository
 baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/updates/Source/
 enabled=1
-gpgcheck=0
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
+priority=1
+
+[xcp-ng-candidates-src]
+name=XCP-ng Candidates Source Repository
+baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/candidates/Source/
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 priority=1
 
 [xcp-ng-testing-src]
 name=XCP-ng Testing Source Repository
 baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/testing/Source/
 enabled=1
-gpgcheck=0
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 priority=1
 
 [xcp-ng-ci-src]
 name=XCP-ng CI Source Repository
 baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/ci/Source/
 enabled=1
-gpgcheck=0
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 priority=1
 
-[xcp-ng-staging-src]
-name=XCP-ng Staging Source Repository
-baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/staging/Source/
+[xcp-ng-incoming-src]
+name=XCP-ng Incoming Source Repository
+baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/incoming/Source/
 enabled=0
-gpgcheck=0
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
+priority=1
+
+[xcp-ng-lab-src]
+name=XCP-ng Lab Source Repository
+baseurl=http://mirrors.xcp-ng.org/8/@XCP_NG_BRANCH@/lab/Source/
+enabled=0
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 priority=1
