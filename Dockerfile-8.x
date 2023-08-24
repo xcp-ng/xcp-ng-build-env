@@ -32,8 +32,6 @@ RUN     yum install -y \
             gcc-c++ \
             git \
             make \
-            mercurial \
-            mock \
             rpm-build \
             rpm-python \
             sudo \
@@ -64,8 +62,7 @@ RUN     bash -c ' \
             fi; \
         ' \
         && echo "builder:builder" | chpasswd \
-        && echo "builder ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers \
-        && usermod -G mock builder
+        && echo "builder ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 RUN     mkdir -p /usr/local/bin
 COPY    files/init-container.sh /usr/local/bin/init-container.sh
