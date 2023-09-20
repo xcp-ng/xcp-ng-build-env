@@ -12,15 +12,12 @@ cd $(dirname "$0")
 
 CUSTOM_ARGS=()
 
-DEFAULT_VERSION="8.2"
 MAJOR=${1:0:1}
 
 RE_ISNUM='^[0-9]$'
 if ! [[ ${MAJOR} =~ ${RE_ISNUM} ]]; then
     echo "[WARNING] The first character of version should be a number: '${MAJOR}' was passed:"
-    MAJOR=8
-    set -- "${DEFAULT_VERSION}" "${@:2}"
-    echo "          using default version ${1}"
+    exit 1
 fi
 
 if [ ${MAJOR} -eq 7 ]; then
