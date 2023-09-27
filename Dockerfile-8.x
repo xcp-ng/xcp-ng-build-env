@@ -33,6 +33,7 @@ RUN     yum install -y \
             git \
             make \
             rpm-build \
+            redhat-rpm-config \
             rpm-python \
             sudo \
             yum-utils \
