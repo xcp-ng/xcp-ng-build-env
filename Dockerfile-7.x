@@ -52,7 +52,7 @@ RUN     bash -c ' \
                 if [ -z "${CUSTOM_BUILDER_GID}" ]; then \
                     CUSTOM_BUILDER_GID="${CUSTOM_BUILDER_UID}"; \
                 fi; \
-                if ! egrep -q "^.*:.:${CUSTOM_BUILDER_GID}:"; then \
+                if ! getent group "${CUSTOM_BUILDER_GID}" >/dev/null; then \
                     groupadd -g "${CUSTOM_BUILDER_GID}" builder; \
                 fi; \
                 useradd -u "${CUSTOM_BUILDER_UID}" -g "${CUSTOM_BUILDER_GID}" builder; \
