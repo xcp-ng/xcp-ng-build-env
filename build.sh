@@ -8,7 +8,22 @@ if [ -z "$1" ]; then
     exit
 fi
 
-RUNNER="${XCPNG_OCI_RUNNER:-docker}"
+RUNNER=""
+if [ -n "$XCPNG_OCI_RUNNER" ]; then
+    RUNNER="$XCPNG_OCI_RUNNER"
+else
+    SUPPORTED_RUNNERS="docker podman"
+    for COMMAND in $SUPPORTED_RUNNERS; do
+        if command -v $COMMAND >/dev/null; then
+            RUNNER="$COMMAND"
+            break
+        fi
+    done
+    if [ -z "$RUNNER" ]; then
+        echo >&2 "cannot find a supported runner: $SUPPORTED_RUNNERS"
+        exit 1
+    fi
+fi
 
 cd $(dirname "$0")
 

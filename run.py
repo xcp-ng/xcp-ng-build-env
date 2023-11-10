@@ -20,7 +20,15 @@ SRPMS_MOUNT_ROOT = "/tmp/docker-SRPMS"
 DEFAULT_BRANCH = '8.3'
 DEFAULT_ULIMIT_NOFILE = 1024
 
-RUNNER = os.getenv("XCPNG_OCI_RUNNER", "docker")
+RUNNER = os.getenv("XCPNG_OCI_RUNNER")
+if RUNNER is None:
+    SUPPORTED_RUNNERS = "docker podman"
+    for command in SUPPORTED_RUNNERS.split():
+        if shutil.which(command):
+            RUNNER = command
+            break
+    else:
+        raise Exception(f"cannot find a supported runner: {SUPPORTED_RUNNERS}")
 
 def make_mount_dir():
     """ Make a randomly-named directory under SRPMS_MOUNT_ROOT. """
