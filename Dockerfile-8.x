@@ -52,7 +52,7 @@ RUN     sed -i "/gpgkey/a exclude=ocaml*" /etc/yum.repos.d/Cent* /etc/yum.repos.
 RUN     bash -c ' \
             if [ -n "${CUSTOM_BUILDER_UID}" ]; then \
                 if [ -z "${CUSTOM_BUILDER_GID}" ]; then \
-                    export CUSTOM_BUILDER_GID="${CUSTOM_BUILDER_UID}"; \
+                    CUSTOM_BUILDER_GID="${CUSTOM_BUILDER_UID}"; \
                 fi; \
                 if ! egrep -q "^.*:.:${CUSTOM_BUILDER_GID}:"; then \
                     groupadd -g "${CUSTOM_BUILDER_GID}" builder; \
