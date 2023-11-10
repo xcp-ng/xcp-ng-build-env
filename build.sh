@@ -31,9 +31,8 @@ fi
 sed -e "s/@XCP_NG_BRANCH@/${1}/g" "$REPO_FILE" > files/tmp-xcp-ng.repo
 sed -e "s/@CENTOS_VERSION@/${CENTOS_VERSION}/g" files/CentOS-Vault.repo.in > files/tmp-CentOS-Vault.repo
 
-# Support using docker on arm64, building
-# for amd64 (e.g. Apple Silicon)
-if [ "$(uname -m)" == "arm64" ]; then
+# Support using docker on other archs (e.g. arm64 for Apple Silicon), building for amd64
+if [ "$(uname -m)" != "x86_64" ]; then
     CUSTOM_ARGS+=( "--platform" "linux/amd64" )
 fi
 

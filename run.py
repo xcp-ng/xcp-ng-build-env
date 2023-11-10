@@ -94,7 +94,7 @@ def main():
     args = parser.parse_args(sys.argv[1:])
 
     docker_args = ["docker", "run", "-i", "-t", "-u", "builder"]
-    if os.uname()[4] == "arm64":
+    if os.uname()[4] != "x86_64":
         docker_args += ["--platform", "linux/amd64"]
     if args.rm:
         docker_args += ["--rm=true"]
