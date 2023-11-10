@@ -14,8 +14,13 @@ want.
 
 ## Configuration
 
-You'll need to install docker. Follow the instructions for your platform on
-https://www.docker.com/
+You'll need to install docker or podman. Podman should be available
+from your distro repositories, for Docker follow the instructions for
+your platform on https://www.docker.com/
+
+If you have both installed, docker will be used by default.  If you
+want to use a specific container runtime, set `XCPNG_OCI_RUNNER` to
+the docker-compatible command to use (typically `podman` or `docker`).
 
 ## Building the container image(s)
 
@@ -23,6 +28,7 @@ You need one container image per target version of XCP-ng.
 
 Clone this repository (outside any container), then use `build.sh` to
 generate the images for the wanted releases of XCP-ng.
+Note that Docker and Podman store container images separately.
 
 ```
 Usage: ./build.sh {version_of_XCP_ng}
@@ -151,7 +157,7 @@ make
 
 If you'd like to develop using the tools on your host and preserve the changes
 to source and revision control but still use the container for building, you
-can do using by mounting a volume in the container, using the `-v` option to mount
+can do using by mouning a volume in the container, using the `-v` option to mount
 a directory from your host to a suitable point inside the container. For
 example, if I clone some repos into a directory on my host, say `/work/code/`,
 then I can mount it inside the container as follows:

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Thin wrapper around "docker run".
+Thin wrapper around "docker run" or "podman run".
 
 Simplifies the creation of a build environment for XCP-ng packages.
 """
@@ -20,6 +20,8 @@ SRPMS_MOUNT_ROOT = "/tmp/docker-SRPMS"
 DEFAULT_BRANCH = '8.3'
 DEFAULT_ULIMIT_NOFILE = 1024
 
+RUNNER = os.getenv("XCPNG_OCI_RUNNER", "docker")
+
 def make_mount_dir():
     """ Make a randomly-named directory under SRPMS_MOUNT_ROOT. """
     srpm_mount_dir = os.path.join(SRPMS_MOUNT_ROOT, str(uuid.uuid4()))
@@ -36,6 +38,10 @@ def copy_srpms(srpm_mount_dir, srpms):
         srpm_name = os.path.basename(srpm)
         shutil.copyfile(srpm, os.path.join(srpm_mount_dir, srpm_name))
 
+def is_podman(runner):
+    if os.path.basename(runner) == "podman":
+        return True
+    return False
 
 def main():
     """ Main entry point. """
@@ -97,7 +103,9 @@ def main():
 
     args = parser.parse_args(sys.argv[1:])
 
-    docker_args = ["docker", "run", "-i", "-t", "-u", "builder"]
+    docker_args = [RUNNER, "run", "-i", "-t", "-u", "builder"]
+    if is_podman(RUNNER):
+        docker_args += ["--userns=keep-id"]
     if os.uname()[4] != "x86_64":
         docker_args += ["--platform", "linux/amd64"]
     if args.rm:

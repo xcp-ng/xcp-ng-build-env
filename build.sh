@@ -8,6 +8,8 @@ if [ -z "$1" ]; then
     exit
 fi
 
+RUNNER="${XCPNG_OCI_RUNNER:-docker}"
+
 cd $(dirname "$0")
 
 CUSTOM_ARGS=()
@@ -56,7 +58,7 @@ fi
 CUSTOM_ARGS+=( "--build-arg" "CUSTOM_BUILDER_UID=${CUSTOM_UID}" )
 CUSTOM_ARGS+=( "--build-arg" "CUSTOM_BUILDER_GID=${CUSTOM_GID}" )
 
-docker build \
+"$RUNNER" build \
     "${CUSTOM_ARGS[@]}" \
     -t xcp-ng/xcp-ng-build-env:${1} \
     --ulimit nofile=1024 \
