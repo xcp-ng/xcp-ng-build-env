@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-""" Thin wrapper around "docker run" which simplifies the creation of a build environment for XCP-ng packages. """
+"""
+Thin wrapper around "docker run".
+
+Simplifies the creation of a build environment for XCP-ng packages.
+"""
 
 import argparse
 import os
