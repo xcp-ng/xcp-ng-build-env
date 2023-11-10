@@ -50,17 +50,17 @@ RUN     sed -i "/gpgkey/a exclude=ocaml*" /etc/yum.repos.d/Cent* /etc/yum.repos.
 
 # Set up the builder user
 RUN     bash -c ' \
+            OPTS=(); \
             if [ -n "${CUSTOM_BUILDER_UID}" ]; then \
-                if [ -z "${CUSTOM_BUILDER_GID}" ]; then \
-                    CUSTOM_BUILDER_GID="${CUSTOM_BUILDER_UID}"; \
-                fi; \
+                OPTS+=("-u" "${CUSTOM_BUILDER_UID}"); \
+            fi; \
+            if [ -n "${CUSTOM_BUILDER_GID}" ]; then \
+                OPTS+=("-g" "${CUSTOM_BUILDER_GID}"); \
                 if ! getent group "${CUSTOM_BUILDER_GID}" >/dev/null; then \
                     groupadd -g "${CUSTOM_BUILDER_GID}" builder; \
                 fi; \
-                useradd -u "${CUSTOM_BUILDER_UID}" -g "${CUSTOM_BUILDER_GID}" builder; \
-            else \
-                useradd builder; \
             fi; \
+            useradd "${OPTS[@]}" builder; \
         ' \
         && echo "builder:builder" | chpasswd \
         && echo "builder ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
