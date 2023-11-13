@@ -12,28 +12,28 @@ cd $(dirname "$0")
 
 CUSTOM_ARGS=()
 
-MAJOR=${1:0:1}
-
-RE_ISNUM='^[0-9]$'
-if ! [[ ${MAJOR} =~ ${RE_ISNUM} ]]; then
-    echo "[WARNING] The first character of version should be a number: '${MAJOR}' was passed:"
-    exit 1
-fi
-
-if [ ${MAJOR} -eq 7 ]; then
-    REPO_FILE=files/xcp-ng.repo.7.x.in
-    CENTOS_VERSION=7.2.1511
-else
-    REPO_FILE=files/xcp-ng.repo.8.x.in
-    CENTOS_VERSION=7.5.1804
-fi
+case "$1" in
+    7.*)
+        REPO_FILE=files/xcp-ng.repo.7.x.in
+        DOCKERFILE=Dockerfile-7.x
+        CENTOS_VERSION=7.2.1511
+        ;;
+    8.*)
+        REPO_FILE=files/xcp-ng.repo.8.x.in
+        DOCKERFILE=Dockerfile-8.x
+        CENTOS_VERSION=7.5.1804
+        ;;
+    *)
+        echo >&2 "Unsupported release '$1'"
+        exit 1
+        ;;
+esac
 
 sed -e "s/@XCP_NG_BRANCH@/${1}/g" "$REPO_FILE" > files/tmp-xcp-ng.repo
 sed -e "s/@CENTOS_VERSION@/${CENTOS_VERSION}/g" files/CentOS-Vault.repo.in > files/tmp-CentOS-Vault.repo
 
-# Support using docker on arm64, building
-# for amd64 (e.g. Apple Silicon)
-if [ "$(uname -m)" == "arm64" ]; then
+# Support using docker on other archs (e.g. arm64 for Apple Silicon), building for amd64
+if [ "$(uname -m)" != "x86_64" ]; then
     CUSTOM_ARGS+=( "--platform" "linux/amd64" )
 fi
 
@@ -57,10 +57,10 @@ CUSTOM_ARGS+=( "--build-arg" "CUSTOM_BUILDER_UID=${CUSTOM_UID}" )
 CUSTOM_ARGS+=( "--build-arg" "CUSTOM_BUILDER_GID=${CUSTOM_GID}" )
 
 docker build \
-    $(echo "${CUSTOM_ARGS[@]}") \
+    "${CUSTOM_ARGS[@]}" \
     -t xcp-ng/xcp-ng-build-env:${1} \
     --ulimit nofile=1024 \
-    -f Dockerfile-${MAJOR}.x .
+    -f $DOCKERFILE .
 
 rm -f files/tmp-xcp-ng.repo
 rm -f files/tmp-CentOS-Vault.repo

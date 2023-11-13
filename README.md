@@ -146,6 +146,7 @@ make
 ```
 
 ## Mounting external directories into the container
+
 If you'd like to develop using the tools on your host and preserve the changes
 to source and revision control but still use the container for building, you
 can do using by using a docker volume.
@@ -156,15 +157,5 @@ example, if I clone some repos into a directory on my host, say `/work/code/`,
 then I can mount it inside the container as follows:
 
 ```sh
-docker run -i -t -v /work/code:/mnt/repos -u builder <IMAGE> /bin/bash
-```
-
-The `-u` flag uses the right UID inside so that changes made in the container
-are with the same UID as outside the container. Docker >=1.6 supports group IDs
-as well and both the group and user can be referenced by name.
-
-Then the following format is available to set the UID/GID:
-
-```sh
--u, --user=                Username or UID (format: <name|uid>[:<group|gid>])
+./run.py -b 8.0 -v /work/code:/mnt/repos
 ```
