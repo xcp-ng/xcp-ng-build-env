@@ -41,6 +41,8 @@ def copy_srpms(srpm_mount_dir, srpms):
 def is_podman(runner):
     if os.path.basename(runner) == "podman":
         return True
+    if subprocess.getoutput(f"{runner} --version").startswith("podman "):
+        return True
     return False
 
 def main():
