@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-""" Thin wrapper around "docker run" which simplifies the creation of a build environment for XCP-ng packages. """
+"""
+Thin wrapper around "docker run" or "podman run".
+
+Simplifies the creation of a build environment for XCP-ng packages.
+"""
 
 import argparse
 import os
@@ -15,6 +19,16 @@ SRPMS_MOUNT_ROOT = "/tmp/docker-SRPMS"
 
 DEFAULT_BRANCH = '8.3'
 DEFAULT_ULIMIT_NOFILE = 1024
+
+RUNNER = os.getenv("XCPNG_OCI_RUNNER")
+if RUNNER is None:
+    SUPPORTED_RUNNERS = "docker podman"
+    for command in SUPPORTED_RUNNERS.split():
+        if shutil.which(command):
+            RUNNER = command
+            break
+    else:
+        raise Exception(f"cannot find a supported runner: {SUPPORTED_RUNNERS}")
 
 def make_mount_dir():
     """ Make a randomly-named directory under SRPMS_MOUNT_ROOT. """
@@ -32,6 +46,12 @@ def copy_srpms(srpm_mount_dir, srpms):
         srpm_name = os.path.basename(srpm)
         shutil.copyfile(srpm, os.path.join(srpm_mount_dir, srpm_name))
 
+def is_podman(runner):
+    if os.path.basename(runner) == "podman":
+        return True
+    if subprocess.getoutput(f"{runner} --version").startswith("podman "):
+        return True
+    return False
 
 def main():
     """ Main entry point. """
@@ -93,7 +113,9 @@ def main():
 
     args = parser.parse_args(sys.argv[1:])
 
-    docker_args = ["docker", "run", "-i", "-t", "-u", "builder"]
+    docker_args = [RUNNER, "run", "-i", "-t", "-u", "builder"]
+    if is_podman(RUNNER):
+        docker_args += ["--userns=keep-id"]
     if os.uname()[4] != "x86_64":
         docker_args += ["--platform", "linux/amd64"]
     if args.rm:

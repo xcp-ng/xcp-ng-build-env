@@ -1,10 +1,11 @@
 # xcp-ng-build-env
 
-This docker config and collection of supporting scripts allows for creating
-a docker container to work on and build a XCP-ng package from an SRPM or from
-a directory containing a `SOURCES/` and a `SPECS/` directory along with appropriate
-RPM spec file and software sources.
-It will build a Docker container with the right build environment (including some
+This container config and collection of supporting scripts allows for
+creating a container to work on and build a XCP-ng package from an
+SRPM or from a directory containing a `SOURCES/` and a `SPECS/`
+directory along with appropriate RPM spec file and software sources.
+
+It will build a container with the right build environment (including some
 useful tools).
 Depending on the parameters, it will either do everything automatically to build a
 given package, or just install build-dependencies and let you work manually from a shell
@@ -13,14 +14,21 @@ want.
 
 ## Configuration
 
-You'll need to install docker. Follow the instructions for your platform on
-https://www.docker.com/
+You'll need to install docker or podman. Podman should be available
+from your distro repositories, for Docker follow the instructions for
+your platform on https://www.docker.com/
 
-## Building the docker image(s)
+If you have both installed, docker will be used by default.  If you
+want to use a specific container runtime, set `XCPNG_OCI_RUNNER` to
+the docker-compatible command to use (typically `podman` or `docker`).
 
-You need one docker image per target version of XCP-ng.
+## Building the container image(s)
 
-Clone this repository (outside any docker container), then use `build.sh` to generate the docker images for the wanted releases of XCP-ng.
+You need one container image per target version of XCP-ng.
+
+Clone this repository (outside any container), then use `build.sh` to
+generate the images for the wanted releases of XCP-ng.
+Note that Docker and Podman store container images separately.
 
 ```
 Usage: ./build.sh {version_of_XCP_ng}
@@ -115,7 +123,7 @@ git clone https://github.com/xcp-ng-rpms/xapi.git
 
 * `-b` / `--branch` allows to select which version of XCP-ng to work on (defaults to the latest known version if not specified).
 * `--no-exit` drops you to a shell after the build, instead of closing the container. Useful if the build fails and you need to debug.
-* `--rm` destroys the container on exit. Helps preventing docker from using too much space on disk. You can still reclaim space afterwards by running `docker container prune` and `docker image prune`
+* `--rm` destroys the container on exit. Helps preventing containers from using too much space on disk. You can still reclaim space afterwards by running `docker container prune` and `docker image prune`
 * `-v` / `--volume` (see *Mounting repos from outside the container* below)
 
 
@@ -149,9 +157,7 @@ make
 
 If you'd like to develop using the tools on your host and preserve the changes
 to source and revision control but still use the container for building, you
-can do using by using a docker volume.
-
-Once you have built your image you can run it with an extra argument to mount
+can do using by mouning a volume in the container, using the `-v` option to mount
 a directory from your host to a suitable point inside the container. For
 example, if I clone some repos into a directory on my host, say `/work/code/`,
 then I can mount it inside the container as follows:
