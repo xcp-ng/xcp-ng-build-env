@@ -37,7 +37,8 @@ RUN     yum install -y \
             rpm-python \
             sudo \
             yum-utils \
-            epel-release
+            epel-release \
+            epel-rpm-macros
 
 # Niceties
 RUN     yum install -y \
