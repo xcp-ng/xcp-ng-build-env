@@ -24,10 +24,17 @@ RUN     yum install -y yum-plugin-ovl
 RUN     yum install -y yum-plugin-priorities
 
 # Update
-RUN     yum update -y
+RUN     yum update -y \
+            --exclude ncurses-base \
+            --exclude ncurses-libs \
+            --exclude ncurses
 
 # Common build requirements
 RUN     yum install -y \
+            --exclude ncurses-base \
+            --exclude ncurses-libs \
+            --exclude ncurses \
+            openssh-clients-7.4p1-23.2.1.xcpng8.3 \
             gcc \
             gcc-c++ \
             git \

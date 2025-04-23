@@ -18,7 +18,12 @@ if [ -n "$ENABLEREPO" ]; then
 fi
 
 # update to either install newer updates or to take packages from added repos into account
-sudo yum update -y --disablerepo=epel
+sudo yum update -y --disablerepo=epel \
+                --exclude ncurses-base \
+                --exclude ncurses-libs \
+                --exclude ncurses \
+                --exclude openssh-clients \
+                --exclude openssh
 
 cd "$HOME"
 
