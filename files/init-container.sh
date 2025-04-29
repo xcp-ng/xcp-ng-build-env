@@ -7,6 +7,19 @@ fi
 # clean yum cache to avoid download errors
 sudo yum clean all
 
+# get list of user repos
+(
+    source /etc/os-release
+    case "$VERSION_ID" in
+        8.2.*) XCPREL=8/8.2 ;;
+        8.3.*) XCPREL=8/8.3 ;;
+        *) echo >&2 "WARNING: unknown release, not fetching user repo definitions" ;;
+    esac
+
+    curl -s https://koji.xcp-ng.org/repos/user/${XCPREL}/xcpng-users.repo |
+        sed '/^gpgkey=/ ipriority=1' | sudo tee /etc/yum.repos.d/xcp-ng-users.repo > /dev/null
+)
+
 # disable repositories if needed
 if [ -n "$DISABLEREPO" ]; then
     sudo yum-config-manager --disable "$DISABLEREPO"
