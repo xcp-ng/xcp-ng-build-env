@@ -1,0 +1,15 @@
+ dist macros.
+
+%__bootstrap ~bootstrap
+%almalinux_ver 10
+%almalinux 10
+%centos_ver 10
+%centos 10
+%rhel 10
+%el10 1
+%distcore            .xcpng9.0
+%dist                .xcpng9.0
+%dist_vendor         XCP-ng
+%dist_name           XCP-ng
+%dist_home_url       https://xcp-ng.org/
+%dist_bug_report_url https://xcp-ng.org/
