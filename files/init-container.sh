@@ -74,9 +74,9 @@ if [ -n "$BUILD_LOCAL" ]; then
     [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
     if [ $? == 0 ]; then
         if [ -n "$RPMBUILD_DEFINE" ]; then
-            rpmbuild -ba SPECS/*.spec --define "$RPMBUILD_DEFINE"
+            rpmbuild --target x86_64_v2 -ba SPECS/*.spec --define "$RPMBUILD_DEFINE"
         else
-            rpmbuild -ba SPECS/*.spec
+            rpmbuild --target x86_64_v2 -ba SPECS/*.spec
         fi
         if [ $? == 0 -a -d ~/output/ ]; then
             cp -rf RPMS SRPMS ~/output/
@@ -88,9 +88,9 @@ elif [ -n "$REBUILD_SRPM" ]; then
     # in case the build deps contain xs-opam-repo, source the added profile.d file
     [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
     if [ -n "$RPMBUILD_DEFINE" ]; then
-        rpmbuild --rebuild "$LOCAL_SRPM_DIR/$REBUILD_SRPM"--define "$RPMBUILD_DEFINE"
+        rpmbuild --target x86_64_v2 --rebuild "$LOCAL_SRPM_DIR/$REBUILD_SRPM"--define "$RPMBUILD_DEFINE"
     else
-        rpmbuild --rebuild "$LOCAL_SRPM_DIR/$REBUILD_SRPM"
+        rpmbuild --target x86_64_v2 --rebuild "$LOCAL_SRPM_DIR/$REBUILD_SRPM"
     fi
     if [ $? == 0 ]; then
         cp -rf ~/rpmbuild/RPMS ~/output/

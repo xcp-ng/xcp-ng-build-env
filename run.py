@@ -117,7 +117,7 @@ def main():
     if is_podman(RUNNER):
         docker_args += ["--userns=keep-id"]
     if os.uname()[4] != "x86_64":
-        docker_args += ["--platform", "linux/amd64"]
+        docker_args += ["--platform", "linux/amd64/v2"]
     if args.rm:
         docker_args += ["--rm=true"]
     branch = args.branch or DEFAULT_BRANCH

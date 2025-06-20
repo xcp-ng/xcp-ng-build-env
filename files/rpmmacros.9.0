@@ -1,4 +1,4 @@
- dist macros.
+# dist macros.
 
 %__bootstrap ~bootstrap
 %almalinux_ver 10

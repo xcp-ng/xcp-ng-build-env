@@ -1,4 +1,4 @@
-FROM    almalinux:10
+FROM    ghcr.io/almalinux/10-base:latest
 
 ARG     CUSTOM_BUILDER_UID=""
 ARG     CUSTOM_BUILDER_GID=""
