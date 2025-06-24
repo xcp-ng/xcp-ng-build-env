@@ -33,6 +33,7 @@ RUN     yum install -y \
             python3-rpm \
             sudo \
             yum-utils \
+            rpmdevtools \
             epel-release
 
 # EPEL

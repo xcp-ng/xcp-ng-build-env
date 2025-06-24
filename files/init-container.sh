@@ -69,14 +69,26 @@ ulimit -s 16384
 if [ -n "$BUILD_LOCAL" ]; then
     pushd ~/rpmbuild
     rm BUILD BUILDROOT RPMS SRPMS -rf
-    sudo yum-builddep -y SPECS/*.spec
+
+    _sourcedir=$(realpath .)
+    specs=$(ls *.spec 2>/dev/null)
+    if [ $? != 0 ]; then
+        _sourcedir=$(realpath ./SOURCES)
+        specs=$(ls SPECS/*.spec 2>/dev/null)
+    fi
+    echo "Found specfiles $specs"
+
     # in case the build deps contain xs-opam-repo, source the added profile.d file
     [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
     if [ $? == 0 ]; then
         if [ -n "$RPMBUILD_DEFINE" ]; then
-            rpmbuild --target x86_64_v2 -ba SPECS/*.spec --define "$RPMBUILD_DEFINE"
+            spectool --get-files --sourcedir $specs --define "_sourcedir $_sourcedir" --define "$RPMBUILD_DEFINE"
+            sudo yum-builddep -y $specs --define "_sourcedir $_sourcedir" --define "$RPMBUILD_DEFINE"
+            rpmbuild --target x86_64_v2 -ba $specs --define "_sourcedir $_sourcedir" --define "$RPMBUILD_DEFINE"
         else
-            rpmbuild --target x86_64_v2 -ba SPECS/*.spec
+            spectool --get-files --sourcedir $specs --define "_sourcedir $_sourcedir"
+            sudo yum-builddep -y $specs --define "_sourcedir $_sourcedir"
+            rpmbuild --target x86_64_v2 -ba $specs --define "_sourcedir $_sourcedir"
         fi
         if [ $? == 0 -a -d ~/output/ ]; then
             cp -rf RPMS SRPMS ~/output/
