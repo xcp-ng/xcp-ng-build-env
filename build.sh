@@ -30,15 +30,15 @@ cd $(dirname "$0")
 CUSTOM_ARGS=()
 
 case "$1" in
-    7.*)
-        REPO_FILE=files/xcp-ng.repo.7.x.in
-        DOCKERFILE=Dockerfile-7.x
-        CENTOS_VERSION=7.2.1511
-        ;;
     8.*)
         REPO_FILE=files/xcp-ng.repo.8.x.in
         DOCKERFILE=Dockerfile-8.x
         CENTOS_VERSION=7.5.1804
+        ;;
+    7.*)
+        REPO_FILE=files/xcp-ng.repo.7.x.in
+        DOCKERFILE=Dockerfile-7.x
+        CENTOS_VERSION=7.2.1511
         ;;
     *)
         echo >&2 "Unsupported release '$1'"
