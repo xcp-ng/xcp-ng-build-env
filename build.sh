@@ -49,11 +49,6 @@ esac
 sed -e "s/@XCP_NG_BRANCH@/${1}/g" "$REPO_FILE" > files/tmp-xcp-ng.repo
 sed -e "s/@CENTOS_VERSION@/${CENTOS_VERSION}/g" files/CentOS-Vault.repo.in > files/tmp-CentOS-Vault.repo
 
-# Support using docker on other archs (e.g. arm64 for Apple Silicon), building for amd64
-if [ "$(uname -m)" != "x86_64" ]; then
-    CUSTOM_ARGS+=( "--platform" "linux/amd64" )
-fi
-
 CUSTOM_UID="$(id -u)"
 CUSTOM_GID="$(id -g)"
 
@@ -74,6 +69,7 @@ CUSTOM_ARGS+=( "--build-arg" "CUSTOM_BUILDER_UID=${CUSTOM_UID}" )
 CUSTOM_ARGS+=( "--build-arg" "CUSTOM_BUILDER_GID=${CUSTOM_GID}" )
 
 "$RUNNER" build \
+    --platform "linux/amd64" \
     "${CUSTOM_ARGS[@]}" \
     -t xcp-ng/xcp-ng-build-env:${1} \
     --ulimit nofile=1024 \
