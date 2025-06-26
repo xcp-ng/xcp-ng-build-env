@@ -80,6 +80,9 @@ def main():
     parser.add_argument('--disablerepo',
                         help='disable repositories. Same syntax as yum\'s --disablerepo parameter. '
                              'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
+    parser.add_argument('--platform', action='store',
+                        help="Override the default platform for the build container. "
+                        "Can notably be used to workaround podman bug #6185 fixed in v5.5.1.")
     parser.add_argument('--fail-on-error', action='store_true',
                         help='If container initialisation fails, exit rather than dropping the user '
                              'into a command shell')
@@ -89,7 +92,7 @@ def main():
     args = parser.parse_args(sys.argv[1:])
 
     branch = args.branch or DEFAULT_BRANCH
-    docker_arch = "linux/amd64/v2" if branch == "9.0" else "linux/amd64"
+    docker_arch = args.platform or ("linux/amd64/v2" if branch == "9.0" else "linux/amd64")
 
     docker_args = [RUNNER, "run", "-i", "-t",
                    "-u", "builder",
