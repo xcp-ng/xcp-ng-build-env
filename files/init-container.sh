@@ -4,18 +4,27 @@ if [ -n "$FAIL_ON_ERROR" ]; then
     set -e
 fi
 
-# get list of user repos
-(
-    source /etc/os-release
-    case "$VERSION_ID" in
-        8.2.*) XCPREL=8/8.2 ;;
-        8.3.*) XCPREL=8/8.3 ;;
-        *) echo >&2 "WARNING: unknown release, not fetching user repo definitions" ;;
-    esac
+os_release()
+{
+    (
+        source /etc/os-release
+        echo "$VERSION_ID"
+    )
+}
 
+OS_RELEASE=$(os_release)
+
+# get list of user repos
+case "$OS_RELEASE" in
+    8.2.*) XCPREL=8/8.2 ;;
+    8.3.*) XCPREL=8/8.3 ;;
+    *) echo >&2 "WARNING: unknown release, not fetching user repo definitions" ;;
+esac
+
+if [ -n "$XCPREL" ]; then
     curl -s https://koji.xcp-ng.org/repos/user/${XCPREL}/xcpng-users.repo |
         sed '/^gpgkey=/ ipriority=1' | sudo tee /etc/yum.repos.d/xcp-ng-users.repo > /dev/null
-)
+fi
 
 # yum or dnf?
 case "$OS_RELEASE" in
