@@ -1,12 +1,42 @@
 #!/usr/bin/env bash
-
 set -e
 
-if [ -z "$1" ]; then
-    echo "Usage: $0 {version}"
-    echo "... where {version} is a 'x.y' version such as 8.0."
-    exit
-fi
+die() {
+    echo >&2
+    echo >&2 "ERROR: $*"
+    echo >&2
+    exit 1
+}
+
+die_usage() {
+    usage >&2
+    die "$*"
+}
+
+usage() {
+    cat <<EOF
+Usage: $0 <version>
+... where <version> is a 'x.y' version such as 8.0.
+EOF
+}
+
+while [ $# -ge 1 ]; do
+    case "$1" in
+        --help|-h)
+            usage
+            exit 0
+            ;;
+        -*)
+            die_usage "unknown flag '$1'"
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift
+done
+
+[ -n "$1" ] || die_usage "version parameter missing"
 
 RUNNER=""
 if [ -n "$XCPNG_OCI_RUNNER" ]; then
