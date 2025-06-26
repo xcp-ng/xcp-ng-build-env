@@ -15,16 +15,24 @@ die_usage() {
 
 usage() {
     cat <<EOF
-Usage: $0 <version>
+Usage: $0 [--platform PF] <version>
 ... where <version> is a 'x.y' version such as 8.0.
+
+--platform override the default platform for the build container.
 EOF
 }
 
+PLATFORM=
 while [ $# -ge 1 ]; do
     case "$1" in
         --help|-h)
             usage
             exit 0
+            ;;
+        --platform)
+            [ $# -ge 2 ] || die_usage "$1 needs an argument"
+            PLATFORM="$2"
+            shift
             ;;
         -*)
             die_usage "unknown flag '$1'"
@@ -65,15 +73,15 @@ case "$1" in
     9.*)
         DOCKERFILE=Dockerfile-9.x
         ALMA_VERSION=10.0
-        PLATFORM=linux/amd64/v2
+        : ${PLATFORM:=linux/amd64/v2}
         ;;
     8.*)
         DOCKERFILE=Dockerfile-8.x
-        PLATFORM=linux/amd64
+        : ${PLATFORM:=linux/amd64}
         ;;
     7.*)
         DOCKERFILE=Dockerfile-7.x
-        PLATFORM=linux/amd64
+        : ${PLATFORM:=linux/amd64}
         ;;
     *)
         echo >&2 "Unsupported release '$1'"
