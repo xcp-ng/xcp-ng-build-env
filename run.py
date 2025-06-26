@@ -88,15 +88,17 @@ def main():
 
     args = parser.parse_args(sys.argv[1:])
 
+    branch = args.branch or DEFAULT_BRANCH
+    docker_arch = "linux/amd64/v2" if branch == "9.0" else "linux/amd64"
+
     docker_args = [RUNNER, "run", "-i", "-t",
                    "-u", "builder",
-                   "--platform", "linux/amd64",
+                   "--platform", docker_arch,
                    ]
     if is_podman(RUNNER):
         docker_args += ["--userns=keep-id"]
     if args.rm:
         docker_args += ["--rm=true"]
-    branch = args.branch or DEFAULT_BRANCH
 
     if args.command != []:
         docker_args += ["-e", "COMMAND=%s" % ' '.join(args.command)]

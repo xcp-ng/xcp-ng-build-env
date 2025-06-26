@@ -59,12 +59,18 @@ cd "$HOME"
 # double the default stack size
 ulimit -s 16384
 
+# get the package arch used in the container (eg. "x86_64_v2")
+RPMARCH=$(rpm -q glibc --qf "%{arch}")
+
 if [ -n "$BUILD_LOCAL" ]; then
     time (
         cd ~/rpmbuild
         rm BUILD BUILDROOT RPMS SRPMS -rf
         sudo $BDEP -y SPECS/*.spec
-        RPMBUILDFLAGS=(-ba SPECS/*.spec)
+        RPMBUILDFLAGS=(
+            -ba SPECS/*.spec
+            --target "$RPMARCH"
+        )
         # in case the build deps contain xs-opam-repo, source the added profile.d file
         [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
         if [ $? == 0 ]; then

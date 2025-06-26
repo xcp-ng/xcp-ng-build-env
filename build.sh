@@ -35,12 +35,15 @@ case "$1" in
     9.*)
         DOCKERFILE=Dockerfile-9.x
         ALMA_VERSION=10.0
+        PLATFORM=linux/amd64/v2
         ;;
     8.*)
         DOCKERFILE=Dockerfile-8.x
+        PLATFORM=linux/amd64
         ;;
     7.*)
         DOCKERFILE=Dockerfile-7.x
+        PLATFORM=linux/amd64
         ;;
     *)
         echo >&2 "Unsupported release '$1'"
@@ -68,7 +71,7 @@ CUSTOM_ARGS+=( "--build-arg" "CUSTOM_BUILDER_UID=${CUSTOM_UID}" )
 CUSTOM_ARGS+=( "--build-arg" "CUSTOM_BUILDER_GID=${CUSTOM_GID}" )
 
 "$RUNNER" build \
-    --platform "linux/amd64" \
+    --platform "$PLATFORM" \
     "${CUSTOM_ARGS[@]}" \
     -t ghcr.io/xcp-ng/xcp-ng-build-env:${1} \
     --build-arg XCP_NG_BRANCH=${1} \
