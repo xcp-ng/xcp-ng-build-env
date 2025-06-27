@@ -88,7 +88,7 @@ elif [ -n "$REBUILD_SRPM" ]; then
     # in case the build deps contain xs-opam-repo, source the added profile.d file
     [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
     if [ -n "$RPMBUILD_DEFINE" ]; then
-        rpmbuild --rebuild "$LOCAL_SRPM_DIR/$REBUILD_SRPM"--define "$RPMBUILD_DEFINE"
+        rpmbuild --rebuild "$LOCAL_SRPM_DIR/$REBUILD_SRPM" --define "$RPMBUILD_DEFINE"
     else
         rpmbuild --rebuild "$LOCAL_SRPM_DIR/$REBUILD_SRPM"
     fi
