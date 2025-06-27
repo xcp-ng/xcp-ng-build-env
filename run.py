@@ -53,6 +53,8 @@ def main():
                         help="Definitions to be passed to rpmbuild (if --build-local is "
                              "passed too). Example: --define 'xcp_ng_section extras', for building the 'extras' "
                              "version of a package which exists in both 'base' and 'extras' versions.")
+    parser.add_argument('--rpmbuild-opts', action='append',
+                        help="Pass additional option(s) to rpmbuild")
     parser.add_argument('-o', '--output-dir',
                         help="Output directory for --build-local.")
     parser.add_argument('-n', '--no-exit', action='store_true',
@@ -111,6 +113,8 @@ def main():
         docker_args += ["-e", "BUILD_LOCAL=1"]
     if args.define:
         docker_args += ["-e", "RPMBUILD_DEFINE=%s" % args.define]
+    if args.rpmbuild_opts:
+        docker_args += ["-e", "RPMBUILD_OPTS=%s" % ' '.join(args.rpmbuild_opts)]
     if args.output_dir:
         if not os.path.isdir(args.output_dir):
             parser.error("%s is not a valid output directory." %

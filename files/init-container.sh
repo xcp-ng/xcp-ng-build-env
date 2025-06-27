@@ -70,6 +70,7 @@ if [ -n "$BUILD_LOCAL" ]; then
         RPMBUILDFLAGS=(
             -ba SPECS/*.spec
             --target "$RPMARCH"
+             $RPMBUILD_OPTS
         )
         # in case the build deps contain xs-opam-repo, source the added profile.d file
         [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
