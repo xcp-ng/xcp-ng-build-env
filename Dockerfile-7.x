@@ -43,6 +43,9 @@ RUN     yum install -y \
             wget \
             which
 
+# clean package cache to avoid download errors
+RUN     yum clean all
+
 # OCaml in XS is slightly older than in CentOS
 RUN     sed -i "/gpgkey/a exclude=ocaml*" /etc/yum.repos.d/Cent* /etc/yum.repos.d/epel*
 
