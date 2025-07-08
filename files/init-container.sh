@@ -36,7 +36,7 @@ cd "$HOME"
 ulimit -s 16384
 
 if [ -n "$BUILD_LOCAL" ]; then
-    (
+    time (
         cd ~/rpmbuild
         rm BUILD BUILDROOT RPMS SRPMS -rf
         sudo yum-builddep -y SPECS/*.spec
