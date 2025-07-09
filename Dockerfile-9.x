@@ -19,6 +19,7 @@ RUN     dnf update -y
 RUN     dnf install -y \
             gcc \
             gcc-c++ \
+            ccache \
             git \
             make \
             rpm-build \
