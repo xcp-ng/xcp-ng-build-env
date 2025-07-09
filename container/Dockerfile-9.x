@@ -34,6 +34,7 @@ RUN     dnf update -y \
         && dnf install -y \
             epel-rpm-macros \
             almalinux-git-utils \
+            ccache \
         # Niceties
         && dnf install -y \
             bash-completion \
