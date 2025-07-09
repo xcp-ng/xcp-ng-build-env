@@ -30,7 +30,8 @@ RUN     dnf install -y \
 
 # EPEL: needs epel-release installed first
 RUN     dnf install -y \
-            epel-rpm-macros
+            epel-rpm-macros \
+            almalinux-git-utils
 
 # Niceties
 RUN     dnf install -y \

@@ -79,6 +79,12 @@ if [ -n "$BUILD_LOCAL" ]; then
         fi
         echo "Found specfiles $specs"
 
+        case "$OS_RELEASE" in
+            8.2.*|8.3.*) ;; # sources always available via git-lfs
+            8.99.*|9.*) if [ -r sources ]; then alma_get_sources -i sources; fi ;;
+            *) echo >&2 "ERROR: unknown release, cannot know package manager"; exit 1 ;;
+        esac
+
         sudo $BDEP "${SPECFLAGS[@]}" -y $specs
         RPMBUILDFLAGS=(
             -ba $specs
