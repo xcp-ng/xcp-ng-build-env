@@ -15,7 +15,6 @@ import sys
 import uuid
 
 CONTAINER_PREFIX = "xcp-ng/xcp-ng-build-env"
-SRPMS_MOUNT_ROOT = "/tmp/docker-SRPMS"
 
 DEFAULT_BRANCH = '8.3'
 DEFAULT_ULIMIT_NOFILE = 2048
@@ -29,22 +28,6 @@ if RUNNER is None:
             break
     else:
         raise Exception(f"cannot find a supported runner: {SUPPORTED_RUNNERS}")
-
-def make_mount_dir():
-    """ Make a randomly-named directory under SRPMS_MOUNT_ROOT. """
-    srpm_mount_dir = os.path.join(SRPMS_MOUNT_ROOT, str(uuid.uuid4()))
-    try:
-        os.makedirs(srpm_mount_dir)
-    except OSError:
-        pass
-    return srpm_mount_dir
-
-
-def copy_srpms(srpm_mount_dir, srpms):
-    """ Copy each SRPM into the mount directory. """
-    for srpm in srpms:
-        srpm_name = os.path.basename(srpm)
-        shutil.copyfile(srpm, os.path.join(srpm_mount_dir, srpm_name))
 
 def is_podman(runner):
     if os.path.basename(runner) == "podman":
@@ -67,19 +50,14 @@ def main():
                              "If --output-dir is set, the RPMS and SRPMS directories will be copied to it "
                              "after the build.")
     parser.add_argument('--define',
-                        help="Definitions to be passed to rpmbuild (if --build-local or --rebuild-srpm are "
+                        help="Definitions to be passed to rpmbuild (if --build-local is "
                              "passed too). Example: --define 'xcp_ng_section extras', for building the 'extras' "
                              "version of a package which exists in both 'base' and 'extras' versions.")
-    parser.add_argument('-r', '--rebuild-srpm',
-                        help="Install dependencies for the SRPM passed as parameter, then build it. "
-                             "Requires the --output-dir parameter to be set.")
     parser.add_argument('-o', '--output-dir',
-                        help="Output directory for --rebuild-srpm and --build-local.")
+                        help="Output directory for --build-local.")
     parser.add_argument('-n', '--no-exit', action='store_true',
                         help='After executing either an automated build or a custom command passed as parameter, '
                              'drop user into a shell')
-    parser.add_argument('-s', '--srpm', action='append',
-                        help='SRPMs for which dependencies will be installed')
     parser.add_argument('-d', '--dir', action='append',
                         help='Local dir to mount in the '
                         'image. Will be mounted at /external/<dirname>')
@@ -128,17 +106,6 @@ def main():
         docker_args += ["-e", "BUILD_LOCAL=1"]
     if args.define:
         docker_args += ["-e", "RPMBUILD_DEFINE=%s" % args.define]
-    if args.rebuild_srpm:
-        if not os.path.isfile(args.rebuild_srpm) or not args.rebuild_srpm.endswith(".src.rpm"):
-            parser.error("%s is not a valid source RPM." % args.rebuild_srpm)
-        if not args.output_dir:
-            parser.error(
-                "Missing --output-dir parameter, required by --rebuild-srpm.")
-        docker_args += ["-e", "REBUILD_SRPM=%s" %
-                        os.path.basename(args.rebuild_srpm)]
-        if args.srpm is None:
-            args.srpm = []
-        args.srpm.append(args.rebuild_srpm)
     if args.output_dir:
         if not os.path.isdir(args.output_dir):
             parser.error("%s is not a valid output directory." %
@@ -149,12 +116,6 @@ def main():
         docker_args += ["-e", "NO_EXIT=1"]
     if args.fail_on_error:
         docker_args += ["-e", "FAIL_ON_ERROR=1"]
-    # Copy all the RPMs to the mount directory
-    srpm_mount_dir = None
-    if args.srpm:
-        srpm_mount_dir = make_mount_dir()
-        copy_srpms(srpm_mount_dir, args.srpm)
-        docker_args += ["-v", "%s:/mnt/docker-SRPMS" % srpm_mount_dir]
     if args.syslog:
         docker_args += ["-v", "/dev/log:/dev/log"]
     if args.name:
@@ -191,10 +152,6 @@ def main():
                     "/usr/local/bin/init-container.sh"]
     print("Launching docker with args %s" % docker_args, file=sys.stderr)
     return_code = subprocess.call(docker_args)
-
-    if srpm_mount_dir:
-        print("Cleaning up temporary mount directory")
-        shutil.rmtree(srpm_mount_dir)
 
     sys.exit(return_code)
 

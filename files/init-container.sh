@@ -32,25 +32,6 @@ sudo yum update -y --disablerepo=epel
 
 cd "$HOME"
 
-SRPM_MOUNT_DIR=/mnt/docker-SRPMS/
-LOCAL_SRPM_DIR=$HOME/local-SRPMs
-
-mkdir -p "$LOCAL_SRPM_DIR"
-
-# Copy in any SRPMs from the directory mounted by the host.
-if [ -d $SRPM_MOUNT_DIR ]
-then
-    cp $SRPM_MOUNT_DIR/*.src.rpm "$LOCAL_SRPM_DIR"
-fi
-
-# Install deps for all the SRPMs.
-SRPMS=$(find "$LOCAL_SRPM_DIR" -name "*.src.rpm")
-
-for SRPM in $SRPMS
-do
-    sudo yum-builddep -y "$SRPM"
-done
-
 # double the default stack size
 ulimit -s 16384
 
@@ -71,18 +52,6 @@ if [ -n "$BUILD_LOCAL" ]; then
         fi
     fi
     popd
-elif [ -n "$REBUILD_SRPM" ]; then
-    # build deps already installed above
-    # in case the build deps contain xs-opam-repo, source the added profile.d file
-    [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
-    if [ -n "$RPMBUILD_DEFINE" ]; then
-        rpmbuild --rebuild "$LOCAL_SRPM_DIR/$REBUILD_SRPM" --define "$RPMBUILD_DEFINE"
-    else
-        rpmbuild --rebuild "$LOCAL_SRPM_DIR/$REBUILD_SRPM"
-    fi
-    if [ $? == 0 ]; then
-        cp -rf ~/rpmbuild/RPMS ~/output/
-    fi
 elif [ -n "$COMMAND" ]; then
     $COMMAND
 else
