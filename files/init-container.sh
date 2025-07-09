@@ -66,11 +66,25 @@ if [ -n "$BUILD_LOCAL" ]; then
     time (
         cd ~/rpmbuild
         rm BUILD BUILDROOT RPMS SRPMS -rf
-        sudo $BDEP -y SPECS/*.spec
+
+        if specs=$(ls *.spec 2>/dev/null); then
+            SPECFLAGS=(
+                --define "_sourcedir $PWD"
+                --define "_specdir $PWD"
+            )
+        else
+            specs=$(ls SPECS/*.spec 2>/dev/null)
+            # SOURCES/ and SPECS/ are still the default in Alma10
+            SPECFLAGS=()
+        fi
+        echo "Found specfiles $specs"
+
+        sudo $BDEP "${SPECFLAGS[@]}" -y $specs
         RPMBUILDFLAGS=(
-            -ba SPECS/*.spec
+            -ba $specs
             --target "$RPMARCH"
-             $RPMBUILD_OPTS
+            $RPMBUILD_OPTS
+            "${SPECFLAGS[@]}"
         )
         # in case the build deps contain xs-opam-repo, source the added profile.d file
         [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
