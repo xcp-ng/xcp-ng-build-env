@@ -11,9 +11,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "0.7.x"
+    - name: Install dependencies
+      run: uv sync --frozen
     - name: Test
+      # use script to provide a tty (workaround of systematic "docker -t"?)
       shell: 'script -q -e -c "bash {0}"'
       run: |
-        ./test/test.sh
+        uv run ./test/test.sh
