@@ -17,18 +17,33 @@ fi
         sed '/^gpgkey=/ ipriority=1' | sudo tee /etc/yum.repos.d/xcp-ng-users.repo > /dev/null
 )
 
+# yum or dnf?
+case "$OS_RELEASE" in
+    8.2.*|8.3.*)
+        DNF=yum
+        CFGMGR=yum-config-manager
+        BDEP=yum-builddep
+        ;;
+    8.99.*|9.*|10.*) # FIXME 10.* actually to bootstrap Alma10
+        DNF=dnf
+        CFGMGR="dnf config-manager"
+        BDEP="dnf builddep"
+        ;;
+    *) echo >&2 "ERROR: unknown release, cannot know package manager"; exit 1 ;;
+esac
+
 # disable repositories if needed
 if [ -n "$DISABLEREPO" ]; then
-    sudo yum-config-manager --disable "$DISABLEREPO"
+    sudo $CFGMGR --disable "$DISABLEREPO"
 fi
 
 # enable additional repositories if needed
 if [ -n "$ENABLEREPO" ]; then
-    sudo yum-config-manager --enable "$ENABLEREPO"
+    sudo $CFGMGR --enable "$ENABLEREPO"
 fi
 
 # update to either install newer updates or to take packages from added repos into account
-sudo yum update -y --disablerepo=epel
+sudo $DNF update -y --disablerepo=epel
 
 cd "$HOME"
 
@@ -39,7 +54,7 @@ if [ -n "$BUILD_LOCAL" ]; then
     time (
         cd ~/rpmbuild
         rm BUILD BUILDROOT RPMS SRPMS -rf
-        sudo yum-builddep -y SPECS/*.spec
+        sudo $BDEP -y SPECS/*.spec
         RPMBUILDFLAGS=(-ba SPECS/*.spec)
         # in case the build deps contain xs-opam-repo, source the added profile.d file
         [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh

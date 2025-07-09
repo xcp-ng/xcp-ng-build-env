@@ -1,0 +1,8 @@
+[xcpng]
+name=XCP-ng 8.99 test
+baseurl=http://repos/repos/ydi/v9alma10v2/
+enabled=1
+gpgcheck=0
+metadata_expire=0
+enabled_metadata=1
+priority=1

@@ -29,7 +29,13 @@ cd $(dirname "$0")
 
 CUSTOM_ARGS=()
 
+ALMA_VERSION=
+CENTOS_VERSION=
 case "$1" in
+    9.*)
+        DOCKERFILE=Dockerfile-9.x
+        ALMA_VERSION=10.0
+        ;;
     8.*)
         DOCKERFILE=Dockerfile-8.x
         ;;
