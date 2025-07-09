@@ -36,22 +36,23 @@ cd "$HOME"
 ulimit -s 16384
 
 if [ -n "$BUILD_LOCAL" ]; then
-    pushd ~/rpmbuild
-    rm BUILD BUILDROOT RPMS SRPMS -rf
-    sudo yum-builddep -y SPECS/*.spec
-    # in case the build deps contain xs-opam-repo, source the added profile.d file
-    [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
-    if [ $? == 0 ]; then
-        if [ -n "$RPMBUILD_DEFINE" ]; then
-            rpmbuild -ba SPECS/*.spec --define "$RPMBUILD_DEFINE"
-        else
-            rpmbuild -ba SPECS/*.spec
+    (
+        cd ~/rpmbuild
+        rm BUILD BUILDROOT RPMS SRPMS -rf
+        sudo yum-builddep -y SPECS/*.spec
+        RPMBUILDFLAGS=(-ba SPECS/*.spec)
+        # in case the build deps contain xs-opam-repo, source the added profile.d file
+        [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
+        if [ $? == 0 ]; then
+            if [ -n "$RPMBUILD_DEFINE" ]; then
+                RPMBUILDFLAGS+=(--define "$RPMBUILD_DEFINE")
+            fi
+            rpmbuild "${RPMBUILDFLAGS[@]}"
+            if [ $? == 0 -a -d ~/output/ ]; then
+                cp -rf RPMS SRPMS ~/output/
+            fi
         fi
-        if [ $? == 0 -a -d ~/output/ ]; then
-            cp -rf RPMS SRPMS ~/output/
-        fi
-    fi
-    popd
+    )
 elif [ -n "$COMMAND" ]; then
     $COMMAND
 else
