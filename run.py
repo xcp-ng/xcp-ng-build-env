@@ -78,9 +78,6 @@ def main():
     parser.add_argument('-n', '--no-exit', action='store_true',
                         help='After executing either an automated build or a custom command passed as parameter, '
                              'drop user into a shell')
-    parser.add_argument('-p', '--package', action='append',
-                        help='Packages for which dependencies will '
-                        'be installed')
     parser.add_argument('-s', '--srpm', action='append',
                         help='SRPMs for which dependencies will be installed')
     parser.add_argument('-d', '--dir', action='append',
@@ -152,10 +149,6 @@ def main():
         docker_args += ["-e", "NO_EXIT=1"]
     if args.fail_on_error:
         docker_args += ["-e", "FAIL_ON_ERROR=1"]
-    # Add package names to the environment
-    if args.package:
-        packages = ' '.join(args.package)
-        docker_args += ['-e', "PACKAGES=%s" % packages]
     # Copy all the RPMs to the mount directory
     srpm_mount_dir = None
     if args.srpm:

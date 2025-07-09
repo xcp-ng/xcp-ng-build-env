@@ -37,15 +37,6 @@ LOCAL_SRPM_DIR=$HOME/local-SRPMs
 
 mkdir -p "$LOCAL_SRPM_DIR"
 
-# Download the source for packages specified in the environment.
-if [ -n "$PACKAGES" ]
-then
-    for PACKAGE in $PACKAGES
-    do
-        yumdownloader --destdir="$LOCAL_SRPM_DIR" --source $PACKAGE
-    done
-fi
-
 # Copy in any SRPMs from the directory mounted by the host.
 if [ -d $SRPM_MOUNT_DIR ]
 then
