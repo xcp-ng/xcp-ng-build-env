@@ -46,6 +46,8 @@ def add_common_args(parser):
     group.add_argument('-e', '--env', action='append',
                        help='Environment variables passed directly to '
                        f'{RUNNER} -e')
+    parser.add_argument('--ccache', action='store',
+                        help="Use given directory as a cache for ccache")
     group.add_argument('-a', '--enablerepo',
                        help='additional repositories to enable before installing build dependencies. '
                        'Same syntax as yum\'s --enablerepo parameter. Available additional repositories: '
@@ -169,6 +171,12 @@ def container(args):
     if args.env:
         for env in args.env:
             docker_args += ["-e", env]
+    if args.ccache:
+        os.makedirs(args.ccache, exist_ok=True)
+        docker_args += ["-v", f"{os.path.realpath(args.ccache)}:/home/builder/ccachedir",
+                        "-e", "CCACHE_DIR=/home/builder/ccachedir",
+                        "-e", "PATH_PREPEND=/usr/lib64/ccache",
+                        ]
     if args.enablerepo:
         docker_args += ["-e", "ENABLEREPO=%s" % args.enablerepo]
     if args.disablerepo:
