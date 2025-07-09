@@ -9,6 +9,7 @@ dynamic = ["version"]
 
 [project.scripts]
 xcp-ng-dev = "xcp_ng_dev.cli:main"
+xcp-ng-dev-env-create = "xcp_ng_dev.cli:build"
 
 [project.urls]
 Homepage = "https://github.com/xcp-ng/xcp-ng-build-env/"

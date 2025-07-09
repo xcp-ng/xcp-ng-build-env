@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
+SELF_NAME="xcp-ng-dev-env-create"
+
 die() {
     echo >&2
     echo >&2 "ERROR: $*"
@@ -15,7 +17,7 @@ die_usage() {
 
 usage() {
     cat <<EOF
-Usage: $0 [--platform PF] <version>
+Usage: $SELF_NAME [--platform PF] <version>
 ... where <version> is a 'x.y' version such as 8.0.
 
 --platform override the default platform for the build container.
@@ -71,12 +73,12 @@ ALMA_VERSION=
 CENTOS_VERSION=
 case "$1" in
     9.*)
-        DOCKERFILE=Dockerfile-9.x
+        DOCKERFILE=files/Dockerfile-9.x
         ALMA_VERSION=10.0
         : ${PLATFORM:=linux/amd64/v2}
         ;;
     8.*)
-        DOCKERFILE=Dockerfile-8.x
+        DOCKERFILE=files/Dockerfile-8.x
         : ${PLATFORM:=linux/amd64}
         ;;
     7.*)

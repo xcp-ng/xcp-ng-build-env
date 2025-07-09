@@ -25,26 +25,49 @@ the docker-compatible command to use (typically `podman` or `docker`).
 You'll need to install git-lfs to be able to download the source tarballs from
 git, otherwise when running xcp-ng-dev, it won't be able to extract the sources.
 
+## Installation
+
+This can be done with `uv`:
+```
+uv tool install --from git+https://github.com/xcp-ng/xcp-ng-build-env xcp-ng-dev
+```
+or `pipx:`
+```
+pipx install git+https://github.com/xcp-ng/xcp-ng-build-env
+```
+
+After this, two new commands will be available: `xcp-ng-dev-env-create` and
+`xcp-ng-dev`.
+
+If you want to develop the package and try the changes as you develop the
+package, clone the repository and install the `xcp-ng-dev` package:
+
+```bash
+git clone github.com:xcp-ng/xcp-ng-build-env
+cd xcp-ng-build-env
+uv tool install --editable .
+```
+
+If `uv` is not available you can use other tools to install python packages,
+like `pipx install --editable .`
+
+If you do not want this behaviour, use: `uv tool install --from . xcp-ng-dev`
+or `pipx install .`
+
 ## Building the container image(s)
 
 You need one container image per target version of XCP-ng.
 
-Clone this repository (outside any container), then use `build.sh` to
+Clone this repository (outside any container), then use `xcp-ng-dev-env-create` to
 generate the images for the wanted releases of XCP-ng.
 Note that Docker and Podman store container images separately.
 
 ```
-Usage: ./build.sh {version_of_XCP_ng}
+Usage: xcp-ng-dev-env-create {version_of_XCP_ng}
 ... where {version_of_XCP_ng} is a 'x.y' version such as 8.0.
 ```
 
 ## Using the container
-
-Install the `xcp-ng-dev` script with however you usually install python
-binaries. For example:
-
-`uv tool install --from path/to/xcp-ng-build-env xcp-ng-dev`
-`pipx install path/to/xcpng-build-env`
 
 Use `xcp-ng-dev`. It accepts a variety of parameters allowing for different uses:
 * rebuild an existing source RPM (with automated installation of the build dependencies)
