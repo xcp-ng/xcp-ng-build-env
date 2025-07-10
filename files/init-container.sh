@@ -3,6 +3,9 @@
 if [ -n "$FAIL_ON_ERROR" ]; then
     set -e
 fi
+if [ -n "$SCRIPT_DEBUG" ]; then
+    set -x
+fi
 
 os_release()
 {

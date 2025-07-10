@@ -91,6 +91,8 @@ def main():
     parser.add_argument('--fail-on-error', action='store_true',
                         help='If container initialisation fails, exit rather than dropping the user '
                              'into a command shell')
+    parser.add_argument('--debug', action='store_true',
+                        help='Enable script tracing in container initialization (sh -x)')
     parser.add_argument('command', nargs=argparse.REMAINDER,
                         help='Command to run inside the prepared container')
 
@@ -132,6 +134,8 @@ def main():
         docker_args += ["-e", "NO_EXIT=1"]
     if args.fail_on_error:
         docker_args += ["-e", "FAIL_ON_ERROR=1"]
+    if args.debug:
+        docker_args += ["-e", "SCRIPT_DEBUG=1"]
     if args.syslog:
         docker_args += ["-v", "/dev/log:/dev/log"]
     if args.name:
