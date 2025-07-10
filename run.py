@@ -119,10 +119,14 @@ def main():
                         os.path.abspath(args.build_local)]
         docker_args += ["-e", "BUILD_LOCAL=1"]
     if args.ccache:
+        os.makedirs(args.ccache, exist_ok=True)
         docker_args += ["-v", f"{args.ccache}:/home/builder/ccachedir",
                         "-e", "CCACHE_DIR=/home/builder/ccachedir",
                         # FIXME
-                        "-e", "PATH=/usr/lib64/ccache:/home/builder/.local/bin:/home/builder/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                        "-e", "PATH=" + ".".join(("/usr/lib64/ccache",
+                                                  "/home/builder/.local/bin:/home/builder/bin",
+                                                  "/usr/local/sbin:/usr/local/bin",
+                                                  "/usr/sbin:/usr/bin:/sbin:/bin")),
                         ]
     if args.define:
         docker_args += ["-e", "RPMBUILD_DEFINE=%s" % args.define]
