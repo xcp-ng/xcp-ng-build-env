@@ -18,6 +18,7 @@ CONTAINER_PREFIX = "ghcr.io/xcp-ng/xcp-ng-build-env"
 
 DEFAULT_BRANCH = '8.3'
 DEFAULT_ULIMIT_NOFILE = 2048
+RPMBUILD_STAGES = "abpfcilsrd"  # valid X values in `rpmbuild -bX`
 
 RUNNER = os.getenv("XCPNG_OCI_RUNNER")
 if RUNNER is None:
@@ -55,6 +56,8 @@ def main():
                              "version of a package which exists in both 'base' and 'extras' versions.")
     parser.add_argument('--rpmbuild-opts', action='append',
                         help="Pass additional option(s) to rpmbuild")
+    parser.add_argument('--rpmbuild-stage', action='store',
+                        help=f"Request given -bX stage rpmbuild, X in [{RPMBUILD_STAGES}]")
     parser.add_argument('-o', '--output-dir',
                         help="Output directory for --build-local.")
     parser.add_argument('-n', '--no-exit', action='store_true',
@@ -115,6 +118,10 @@ def main():
         docker_args += ["-e", "RPMBUILD_DEFINE=%s" % args.define]
     if args.rpmbuild_opts:
         docker_args += ["-e", "RPMBUILD_OPTS=%s" % ' '.join(args.rpmbuild_opts)]
+    if args.rpmbuild_stage:
+        if args.rpmbuild_stage not in RPMBUILD_STAGES:
+            parser.error(f"--rpmbuild-stage={args.rpmbuild_stage} not in '{RPMBUILD_STAGES}'")
+        docker_args += ["-e", f"RPMBUILD_STAGE={args.rpmbuild_stage}"]
     if args.output_dir:
         if not os.path.isdir(args.output_dir):
             parser.error("%s is not a valid output directory." %

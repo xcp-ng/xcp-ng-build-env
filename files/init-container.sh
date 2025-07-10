@@ -86,8 +86,10 @@ if [ -n "$BUILD_LOCAL" ]; then
         esac
 
         sudo $BDEP "${SPECFLAGS[@]}" -y $specs
+
+        : ${RPMBUILD_STAGE:=a}  # default if not specified: -ba
         RPMBUILDFLAGS=(
-            -ba $specs
+            -b${RPMBUILD_STAGE} $specs
             --target "$RPMARCH"
             $RPMBUILD_OPTS
             "${SPECFLAGS[@]}"
