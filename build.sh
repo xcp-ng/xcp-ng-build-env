@@ -31,23 +31,16 @@ CUSTOM_ARGS=()
 
 case "$1" in
     8.*)
-        REPO_FILE=files/xcp-ng.repo.8.x.in
         DOCKERFILE=Dockerfile-8.x
-        CENTOS_VERSION=7.5.1804
         ;;
     7.*)
-        REPO_FILE=files/xcp-ng.repo.7.x.in
         DOCKERFILE=Dockerfile-7.x
-        CENTOS_VERSION=7.2.1511
         ;;
     *)
         echo >&2 "Unsupported release '$1'"
         exit 1
         ;;
 esac
-
-sed -e "s/@XCP_NG_BRANCH@/${1}/g" "$REPO_FILE" > files/tmp-xcp-ng.repo
-sed -e "s/@CENTOS_VERSION@/${CENTOS_VERSION}/g" files/CentOS-Vault.repo.in > files/tmp-CentOS-Vault.repo
 
 CUSTOM_UID="$(id -u)"
 CUSTOM_GID="$(id -g)"
@@ -72,8 +65,6 @@ CUSTOM_ARGS+=( "--build-arg" "CUSTOM_BUILDER_GID=${CUSTOM_GID}" )
     --platform "linux/amd64" \
     "${CUSTOM_ARGS[@]}" \
     -t ghcr.io/xcp-ng/xcp-ng-build-env:${1} \
+    --build-arg XCP_NG_BRANCH=${1} \
     --ulimit nofile=1024 \
     -f $DOCKERFILE .
-
-rm -f files/tmp-xcp-ng.repo
-rm -f files/tmp-CentOS-Vault.repo
