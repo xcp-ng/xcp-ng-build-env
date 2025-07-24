@@ -1,8 +1,5 @@
 FROM    ghcr.io/almalinux/10-base:10.0
 
-ARG     CUSTOM_BUILDER_UID=""
-ARG     CUSTOM_BUILDER_GID=""
-
 # Add our repositories
 # temporary bootstrap repository
 COPY    files/xcp-ng-8.99.repo /etc/yum.repos.d/xcp-ng.repo
@@ -55,25 +52,19 @@ RUN     dnf config-manager --enable crb
 # workaround sudo not working (e.g. in podman 4.9.3 in Ubuntu 24.04)
 RUN     chmod 0400 /etc/shadow
 
-# Set up the builder user
-RUN     bash -c ' \
-            OPTS=(); \
-            if [ -n "${CUSTOM_BUILDER_UID}" ]; then \
-                OPTS+=("-u" "${CUSTOM_BUILDER_UID}"); \
-            fi; \
-            if [ -n "${CUSTOM_BUILDER_GID}" ]; then \
-                OPTS+=("-g" "${CUSTOM_BUILDER_GID}"); \
-                if ! getent group "${CUSTOM_BUILDER_GID}" >/dev/null; then \
-                    groupadd -g "${CUSTOM_BUILDER_GID}" builder; \
-                fi; \
-            fi; \
-            useradd "${OPTS[@]}" builder; \
-        ' \
+# create the builder user
+RUN     groupadd -g 1000 builder \
+        && useradd -u 1000 -g 1000 builder \
         && echo "builder:builder" | chpasswd \
         && echo "builder ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 RUN     mkdir -p /usr/local/bin
+RUN     curl -fsSL "https://github.com/tianon/gosu/releases/download/1.17/gosu-amd64" -o /usr/local/bin/gosu \
+        && chmod +x /usr/local/bin/gosu
 COPY    files/init-container.sh /usr/local/bin/init-container.sh
-
+COPY    files/entrypoint.sh /usr/local/bin/entrypoint.sh
 # FIXME: check it we really need any of this
-# COPY    files/rpmmacros /home/builder/.rpmmacros
+# COPY    --chown=builder:builder files/rpmmacros /home/builder/.rpmmacros
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["bash"]
