@@ -148,12 +148,18 @@ def container(args):
     branch = args.branch
     docker_arch = args.platform or ("linux/amd64/v2" if branch == "9.0" else "linux/amd64")
 
-    docker_args = [RUNNER, "run", "-i", "-t",
-                   "-u", "builder",
-                   "--platform", docker_arch,
-                   ]
+    docker_args = [RUNNER, "run", "-i", "-t", "--platform", docker_arch]
+
     if is_podman(RUNNER):
-        docker_args += ["--userns=keep-id", "--security-opt", "label=disable"]
+        # With podman we use the `--userns` option to map the builder user to
+        # the user on the system.
+        docker_args += ["--userns=keep-id:uid=1000,gid=1000", "--security-opt", "label=disable"]
+    else:
+        # With docker, we modify the builder user in the entrypoint to match the
+        # uid:gid of the user launching the container, and then continue with
+        # the builder user thanks to gosu.
+        docker_args += ["-e", f'BUILDER_UID={os.getuid()}', "-e", f'BUILDER_GID={os.getgid()}']
+
     if args.rm:
         docker_args += ["--rm=true"]
 
