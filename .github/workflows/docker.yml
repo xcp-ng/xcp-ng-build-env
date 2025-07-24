@@ -1,0 +1,83 @@
+name: Build and Push Docker Image to GHCR
+
+on: push
+
+permissions:
+  contents: read # Required to checkout the repo code
+  packages: write # Required to push packages to GHCR
+
+jobs:
+  xcp-ng-build-env-82:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+      - uses: docker/login-action@v3
+        if: github.ref == 'refs/heads/master'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }} # Uses the GitHub user/org name that triggered the workflow
+          password: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub
+      - uses: docker/build-push-action@v5 # Using v5 for latest features
+        with:
+          context: ./src/xcp_ng_dev/
+          file: ./src/xcp_ng_dev/files/Dockerfile-8.x
+          push: ${{ github.ref == 'refs/heads/master' }}
+          tags: ghcr.io/${{ github.repository }}:8.2
+          cache-from: type=gha,scope=${{ github.ref_name }}-82 # Cache layers to speed up builds
+          cache-to: type=gha,mode=max,scope=${{ github.ref_name }}-82 # Store layers in cache for future builds
+          build-args: |
+            XCP_NG_BRANCH=8.2
+          platforms: |
+            linux/amd64
+
+  xcp-ng-build-env-83:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+      - uses: docker/login-action@v3
+        if: github.ref == 'refs/heads/master'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }} # Uses the GitHub user/org name that triggered the workflow
+          password: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub
+      - uses: docker/build-push-action@v5 # Using v5 for latest features
+        with:
+          context: ./src/xcp_ng_dev/
+          file: ./src/xcp_ng_dev/files/Dockerfile-8.x
+          push: ${{ github.ref == 'refs/heads/master' }}
+          tags: ghcr.io/${{ github.repository }}:8.3
+          cache-from: type=gha,scope=${{ github.ref_name }}-83 # Cache layers to speed up builds
+          cache-to: type=gha,mode=max,scope=${{ github.ref_name }}-83 # Store layers in cache for future builds
+          platforms: |
+            linux/amd64
+
+  # TODO: uncomment once we have a public xcp-ng 9.0 repository
+  # xcp-ng-build-env-90:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: docker/setup-buildx-action@v3
+  #       with:
+  #         driver: docker-container
+  #     - uses: docker/login-action@v3
+  #       if: github.ref == 'refs/heads/master'
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }} # Uses the GitHub user/org name that triggered the workflow
+  #         password: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub
+  #     - uses: docker/build-push-action@v5 # Using v5 for latest features
+  #       with:
+  #         context: ./src/xcp_ng_dev/
+  #         file: ./src/xcp_ng_dev/files/Dockerfile-9.x
+  #         platforms: |
+  #           linux/amd64/v2
+  #         push: ${{ github.ref == 'refs/heads/master' }}
+  #         tags: ghcr.io/${{ github.repository }}:9.0
+  #         cache-from: type=gha,scope=${{ github.ref_name }}-90 # Cache layers to speed up builds
+  #         cache-to: type=gha,mode=max,scope=${{ github.ref_name }}-90 # Store layers in cache for future builds
