@@ -10,10 +10,9 @@ COPY    files/Alma10-devel.repo /etc/yum.repos.d/
 RUN     curl -sSf https://xcp-ng.org/RPM-GPG-KEY-xcpng -o /etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 
 # Update
-RUN     dnf update -y
-
-# Common build requirements
-RUN     dnf install -y \
+RUN     dnf update -y \
+        # Common build requirements
+        && dnf install -y \
             gcc \
             gcc-c++ \
             git \
@@ -23,28 +22,24 @@ RUN     dnf install -y \
             python3-rpm \
             sudo \
             dnf-plugins-core \
-            epel-release
-
-# EPEL: needs epel-release installed first
-RUN     dnf install -y \
+            epel-release \
+        # EPEL: needs epel-release installed first
+        && dnf install -y \
             epel-rpm-macros \
-            almalinux-git-utils
-
-# Niceties
-RUN     dnf install -y \
+            almalinux-git-utils \
+        # Niceties
+        && dnf install -y \
             bash-completion \
             vim \
             wget \
-            which
-
-# clean package cache to avoid download errors
-RUN     yum clean all
-
-# -release*, to be commented out to boostrap the build-env until it gets built
-# FIXME: isn't it already pulled as almalinux-release when available?
-RUN     dnf install -y \
+            which \
+        # -release*, to be commented out to boostrap the build-env until it gets built
+        # FIXME: isn't it already pulled as almalinux-release when available?
+        && dnf install -y \
             xcp-ng-release \
-            xcp-ng-release-presets
+            xcp-ng-release-presets \
+        # clean package cache to avoid download errors
+        && yum clean all
 
 # enable repositories commonly required to build
 RUN     dnf config-manager --enable crb
