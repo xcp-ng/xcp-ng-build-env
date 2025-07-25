@@ -19,18 +19,15 @@ RUN     sed -i -e "s/@XCP_NG_BRANCH@/${XCP_NG_BRANCH}/g" /etc/yum.repos.d/xcp-ng
 # Install GPG key
 RUN     curl -sSf https://xcp-ng.org/RPM-GPG-KEY-xcpng -o /etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 
-# Fix invalid rpmdb checksum error with overlayfs, see https://github.com/docker/docker/issues/10180
-# (still needed?)
-RUN     yum install -y yum-plugin-ovl
-
-# Use priorities so that packages from our repositories are preferred over those from CentOS repositories
-RUN     yum install -y yum-plugin-priorities
-
 # Update
-RUN     yum update -y
-
-# Common build requirements
-RUN     yum install -y \
+RUN     yum update -y \
+        # Fix invalid rpmdb checksum error with overlayfs, see https://github.com/docker/docker/issues/10180
+        # (still needed?)
+        && yum install -y yum-plugin-ovl \
+        # Use priorities so that packages from our repositories are preferred over those from CentOS repositories
+        && yum install -y yum-plugin-priorities \
+        # Common build requirements
+        && yum install -y \
             gcc \
             gcc-c++ \
             git \
@@ -41,16 +38,14 @@ RUN     yum install -y \
             sudo \
             yum-utils \
             epel-release \
-            epel-rpm-macros
-
-# Niceties
-RUN     yum install -y \
+            epel-rpm-macros \
+        # Niceties
+        && yum install -y \
             vim \
             wget \
-            which
-
-# clean package cache to avoid download errors
-RUN     yum clean all
+            which \
+        # clean package cache to avoid download errors
+        && yum clean all
 
 # OCaml in XS may be older than in CentOS
 RUN     sed -i "/gpgkey/a exclude=ocaml*" /etc/yum.repos.d/Cent* /etc/yum.repos.d/epel*
