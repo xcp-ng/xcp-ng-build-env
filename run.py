@@ -14,7 +14,7 @@ import shutil
 import sys
 import uuid
 
-CONTAINER_PREFIX = "xcp-ng/xcp-ng-build-env"
+CONTAINER_PREFIX = "ghcr.io/xcp-ng/xcp-ng-build-env"
 
 DEFAULT_BRANCH = '8.3'
 DEFAULT_ULIMIT_NOFILE = 2048
