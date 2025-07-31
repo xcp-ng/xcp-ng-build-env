@@ -52,6 +52,9 @@ RUN     dnf install -y \
 # enable repositories commonly required to build
 RUN     dnf config-manager --enable crb
 
+# workaround sudo not working (e.g. in podman 4.9.3 in Ubuntu 24.04)
+RUN     chmod 0400 /etc/shadow
+
 # Set up the builder user
 RUN     bash -c ' \
             OPTS=(); \
