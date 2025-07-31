@@ -126,6 +126,29 @@ git clone https://github.com/xcp-ng-rpms/xapi.git
 * `--rm` destroys the container on exit. Helps preventing containers from using too much space on disk. You can still reclaim space afterwards by running `docker container prune` and `docker image prune`
 * `-v` / `--volume` (see *Mounting repos from outside the container* below)
 
+**Refreshing fuzzy patches**
+
+In XCP-ng 9.0, `rpmbuild` rejects fuzzy patches.  The easiest-known
+way to get them refreshed is to let `quilt` do the job, but that's not
+fully automated.
+
+1. modify the specfile to add `-Squilt` to `%autosetup` or
+   `%autopatch` in the `%prep` block; add `BuildRequires: quilt`
+2. let quilt apply them in a 8.3 buildenv (`quilt` in 8.3 is only in EPEL) and get you a shell:
+   ```
+xcpng/build-env/run.py --rm -b 8.3 -l . --rpmbuild-stage=p -n --enablerepo=epel
+   ```
+3. ask `quilt` to refresh all your patches (alternatively just the one you want)
+   ```
+$ cd rpmbuild/BUILD/$dir
+$ quilt pop -a --refresh
+$ cp patches/* ../../SOURCES/
+   ```
+4. carefully pick up the bits you need
+
+Note: unfortunately `rpmbuild` (in 8.3 at least) does not add all
+patches in `patches/series` upfront, so in case of real conflict this
+has to be redone from step 2 each time.
 
 ## Building packages manually
 

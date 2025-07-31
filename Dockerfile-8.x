@@ -1,4 +1,6 @@
-FROM    centos:7.5.1804
+ARG     CENTOS_VERSION=7.5.1804
+
+FROM    centos:${CENTOS_VERSION}
 
 ARG     CUSTOM_BUILDER_UID=""
 ARG     CUSTOM_BUILDER_GID=""
@@ -7,11 +9,15 @@ ARG     CUSTOM_BUILDER_GID=""
 RUN     rm /etc/yum.repos.d/*
 
 # Add only the specific CentOS 7.5 repositories, because that's what XS used for the majority of packages
-COPY    files/tmp-CentOS-Vault.repo /etc/yum.repos.d/CentOS-Vault-7.5.repo
+ARG     CENTOS_VERSION
+COPY    files/CentOS-Vault.repo.in /etc/yum.repos.d/CentOS-Vault-7.5.repo
+RUN     sed -e "s/@CENTOS_VERSION@/${CENTOS_VERSION}/g" -i /etc/yum.repos.d/CentOS-Vault-7.5.repo
 
 # Add our repositories
 # Repository file depends on the target version of XCP-ng, and is pre-processed by build.sh
-COPY    files/tmp-xcp-ng.repo /etc/yum.repos.d/xcp-ng.repo
+ARG     XCP_NG_BRANCH=8.3
+COPY    files/xcp-ng.repo.8.x.in /etc/yum.repos.d/xcp-ng.repo
+RUN     sed -e "s/@XCP_NG_BRANCH@/${XCP_NG_BRANCH}/g" -i /etc/yum.repos.d/xcp-ng.repo
 
 # Install GPG key
 RUN     curl -sSf https://xcp-ng.org/RPM-GPG-KEY-xcpng -o /etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
@@ -45,6 +51,9 @@ RUN     yum install -y \
             vim \
             wget \
             which
+
+# clean package cache to avoid download errors
+RUN     yum clean all
 
 # OCaml in XS may be older than in CentOS
 RUN     sed -i "/gpgkey/a exclude=ocaml*" /etc/yum.repos.d/Cent* /etc/yum.repos.d/epel*

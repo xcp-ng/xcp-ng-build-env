@@ -1,12 +1,50 @@
 #!/usr/bin/env bash
-
 set -e
 
-if [ -z "$1" ]; then
-    echo "Usage: $0 {version}"
-    echo "... where {version} is a 'x.y' version such as 8.0."
-    exit
-fi
+die() {
+    echo >&2
+    echo >&2 "ERROR: $*"
+    echo >&2
+    exit 1
+}
+
+die_usage() {
+    usage >&2
+    die "$*"
+}
+
+usage() {
+    cat <<EOF
+Usage: $0 [--platform PF] <version>
+... where <version> is a 'x.y' version such as 8.0.
+
+--platform override the default platform for the build container.
+EOF
+}
+
+PLATFORM=
+while [ $# -ge 1 ]; do
+    case "$1" in
+        --help|-h)
+            usage
+            exit 0
+            ;;
+        --platform)
+            [ $# -ge 2 ] || die_usage "$1 needs an argument"
+            PLATFORM="$2"
+            shift
+            ;;
+        -*)
+            die_usage "unknown flag '$1'"
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift
+done
+
+[ -n "$1" ] || die_usage "version parameter missing"
 
 RUNNER=""
 if [ -n "$XCPNG_OCI_RUNNER" ]; then
@@ -29,30 +67,27 @@ cd $(dirname "$0")
 
 CUSTOM_ARGS=()
 
+ALMA_VERSION=
+CENTOS_VERSION=
 case "$1" in
-    7.*)
-        REPO_FILE=files/xcp-ng.repo.7.x.in
-        DOCKERFILE=Dockerfile-7.x
-        CENTOS_VERSION=7.2.1511
+    9.*)
+        DOCKERFILE=Dockerfile-9.x
+        ALMA_VERSION=10.0
+        : ${PLATFORM:=linux/amd64/v2}
         ;;
     8.*)
-        REPO_FILE=files/xcp-ng.repo.8.x.in
         DOCKERFILE=Dockerfile-8.x
-        CENTOS_VERSION=7.5.1804
+        : ${PLATFORM:=linux/amd64}
+        ;;
+    7.*)
+        DOCKERFILE=Dockerfile-7.x
+        : ${PLATFORM:=linux/amd64}
         ;;
     *)
         echo >&2 "Unsupported release '$1'"
         exit 1
         ;;
 esac
-
-sed -e "s/@XCP_NG_BRANCH@/${1}/g" "$REPO_FILE" > files/tmp-xcp-ng.repo
-sed -e "s/@CENTOS_VERSION@/${CENTOS_VERSION}/g" files/CentOS-Vault.repo.in > files/tmp-CentOS-Vault.repo
-
-# Support using docker on other archs (e.g. arm64 for Apple Silicon), building for amd64
-if [ "$(uname -m)" != "x86_64" ]; then
-    CUSTOM_ARGS+=( "--platform" "linux/amd64" )
-fi
 
 CUSTOM_UID="$(id -u)"
 CUSTOM_GID="$(id -g)"
@@ -74,10 +109,9 @@ CUSTOM_ARGS+=( "--build-arg" "CUSTOM_BUILDER_UID=${CUSTOM_UID}" )
 CUSTOM_ARGS+=( "--build-arg" "CUSTOM_BUILDER_GID=${CUSTOM_GID}" )
 
 "$RUNNER" build \
+    --platform "$PLATFORM" \
     "${CUSTOM_ARGS[@]}" \
-    -t xcp-ng/xcp-ng-build-env:${1} \
+    -t ghcr.io/xcp-ng/xcp-ng-build-env:${1} \
+    --build-arg XCP_NG_BRANCH=${1} \
     --ulimit nofile=1024 \
     -f $DOCKERFILE .
-
-rm -f files/tmp-xcp-ng.repo
-rm -f files/tmp-CentOS-Vault.repo

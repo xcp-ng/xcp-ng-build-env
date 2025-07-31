@@ -3,98 +3,112 @@
 if [ -n "$FAIL_ON_ERROR" ]; then
     set -e
 fi
+if [ -n "$SCRIPT_DEBUG" ]; then
+    set -x
+fi
 
-# clean yum cache to avoid download errors
-sudo yum clean all
+os_release()
+{
+    (
+        source /etc/os-release
+        echo "$VERSION_ID"
+    )
+}
+
+OS_RELEASE=$(os_release)
 
 # get list of user repos
-(
-    source /etc/os-release
-    case "$VERSION_ID" in
-        8.2.*) XCPREL=8/8.2 ;;
-        8.3.*) XCPREL=8/8.3 ;;
-        *) echo >&2 "WARNING: unknown release, not fetching user repo definitions" ;;
-    esac
+case "$OS_RELEASE" in
+    8.2.*) XCPREL=8/8.2 ;;
+    8.3.*) XCPREL=8/8.3 ;;
+    *) echo >&2 "WARNING: unknown release, not fetching user repo definitions" ;;
+esac
 
+if [ -n "$XCPREL" ]; then
     curl -s https://koji.xcp-ng.org/repos/user/${XCPREL}/xcpng-users.repo |
         sed '/^gpgkey=/ ipriority=1' | sudo tee /etc/yum.repos.d/xcp-ng-users.repo > /dev/null
-)
+fi
+
+# yum or dnf?
+case "$OS_RELEASE" in
+    8.2.*|8.3.*)
+        DNF=yum
+        CFGMGR=yum-config-manager
+        BDEP=yum-builddep
+        ;;
+    8.99.*|9.*|10.*) # FIXME 10.* actually to bootstrap Alma10
+        DNF=dnf
+        CFGMGR="dnf config-manager"
+        BDEP="dnf builddep"
+        ;;
+    *) echo >&2 "ERROR: unknown release, cannot know package manager"; exit 1 ;;
+esac
 
 # disable repositories if needed
 if [ -n "$DISABLEREPO" ]; then
-    sudo yum-config-manager --disable "$DISABLEREPO"
+    sudo $CFGMGR --disable "$DISABLEREPO"
 fi
 
 # enable additional repositories if needed
 if [ -n "$ENABLEREPO" ]; then
-    sudo yum-config-manager --enable "$ENABLEREPO"
+    sudo $CFGMGR --enable "$ENABLEREPO"
 fi
 
 # update to either install newer updates or to take packages from added repos into account
-sudo yum update -y --disablerepo=epel
+sudo $DNF update -y --disablerepo=epel
 
 cd "$HOME"
-
-SRPM_MOUNT_DIR=/mnt/docker-SRPMS/
-LOCAL_SRPM_DIR=$HOME/local-SRPMs
-
-mkdir -p "$LOCAL_SRPM_DIR"
-
-# Download the source for packages specified in the environment.
-if [ -n "$PACKAGES" ]
-then
-    for PACKAGE in $PACKAGES
-    do
-        yumdownloader --destdir="$LOCAL_SRPM_DIR" --source $PACKAGE
-    done
-fi
-
-# Copy in any SRPMs from the directory mounted by the host.
-if [ -d $SRPM_MOUNT_DIR ]
-then
-    cp $SRPM_MOUNT_DIR/*.src.rpm "$LOCAL_SRPM_DIR"
-fi
-
-# Install deps for all the SRPMs.
-SRPMS=$(find "$LOCAL_SRPM_DIR" -name "*.src.rpm")
-
-for SRPM in $SRPMS
-do
-    sudo yum-builddep -y "$SRPM"
-done
 
 # double the default stack size
 ulimit -s 16384
 
+# get the package arch used in the container (eg. "x86_64_v2")
+RPMARCH=$(rpm -q glibc --qf "%{arch}")
+
 if [ -n "$BUILD_LOCAL" ]; then
-    pushd ~/rpmbuild
-    rm BUILD BUILDROOT RPMS SRPMS -rf
-    sudo yum-builddep -y SPECS/*.spec
-    # in case the build deps contain xs-opam-repo, source the added profile.d file
-    [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
-    if [ $? == 0 ]; then
-        if [ -n "$RPMBUILD_DEFINE" ]; then
-            rpmbuild -ba SPECS/*.spec --define "$RPMBUILD_DEFINE"
+    time (
+        cd ~/rpmbuild
+        rm BUILD BUILDROOT RPMS SRPMS -rf
+
+        if specs=$(ls *.spec 2>/dev/null); then
+            SPECFLAGS=(
+                --define "_sourcedir $PWD"
+                --define "_specdir $PWD"
+            )
         else
-            rpmbuild -ba SPECS/*.spec
+            specs=$(ls SPECS/*.spec 2>/dev/null)
+            # SOURCES/ and SPECS/ are still the default in Alma10
+            SPECFLAGS=()
         fi
-        if [ $? == 0 -a -d ~/output/ ]; then
-            cp -rf RPMS SRPMS ~/output/
+        echo "Found specfiles $specs"
+
+        case "$OS_RELEASE" in
+            8.2.*|8.3.*) ;; # sources always available via git-lfs
+            8.99.*|9.*) if [ -r sources ]; then alma_get_sources -i sources; fi ;;
+            *) echo >&2 "ERROR: unknown release, cannot know package manager"; exit 1 ;;
+        esac
+
+        sudo $BDEP "${SPECFLAGS[@]}" -y $specs
+
+        : ${RPMBUILD_STAGE:=a}  # default if not specified: -ba
+        RPMBUILDFLAGS=(
+            -b${RPMBUILD_STAGE} $specs
+            --target "$RPMARCH"
+            $RPMBUILD_OPTS
+            "${SPECFLAGS[@]}"
+        )
+        # in case the build deps contain xs-opam-repo, source the added profile.d file
+        [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
+        if [ $? == 0 ]; then
+            if [ -n "$RPMBUILD_DEFINE" ]; then
+                RPMBUILDFLAGS+=(--define "$RPMBUILD_DEFINE")
+            fi
+            rpmbuild "${RPMBUILDFLAGS[@]}"
+            if [ $? == 0 -a -d ~/output/ ]; then
+                cp -rf RPMS SRPMS ~/output/
+            fi
         fi
-    fi
-    popd
-elif [ -n "$REBUILD_SRPM" ]; then
-    # build deps already installed above
-    # in case the build deps contain xs-opam-repo, source the added profile.d file
-    [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
-    if [ -n "$RPMBUILD_DEFINE" ]; then
-        rpmbuild --rebuild "$LOCAL_SRPM_DIR/$REBUILD_SRPM"--define "$RPMBUILD_DEFINE"
-    else
-        rpmbuild --rebuild "$LOCAL_SRPM_DIR/$REBUILD_SRPM"
-    fi
-    if [ $? == 0 ]; then
-        cp -rf ~/rpmbuild/RPMS ~/output/
-    fi
+    )
 elif [ -n "$COMMAND" ]; then
     $COMMAND
 else
