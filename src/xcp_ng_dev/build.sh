@@ -81,10 +81,6 @@ case "$1" in
         DOCKERFILE=files/Dockerfile-8.x
         : ${PLATFORM:=linux/amd64}
         ;;
-    7.*)
-        DOCKERFILE=Dockerfile-7.x
-        : ${PLATFORM:=linux/amd64}
-        ;;
     *)
         echo >&2 "Unsupported release '$1'"
         exit 1
