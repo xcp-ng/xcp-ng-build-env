@@ -106,7 +106,7 @@ def main():
                    "--platform", docker_arch,
                    ]
     if is_podman(RUNNER):
-        docker_args += ["--userns=keep-id"]
+        docker_args += ["--userns=keep-id", "--security-opt", "label=disable"]
     if args.rm:
         docker_args += ["--rm=true"]
 
