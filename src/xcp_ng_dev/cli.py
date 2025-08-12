@@ -68,16 +68,16 @@ def main():
                         'image. Will be mounted at /external/<dirname>')
     parser.add_argument('-e', '--env', action='append',
                         help='Environment variables passed directly to '
-                             'docker -e')
+                             f'{RUNNER} -e')
     parser.add_argument('-v', '--volume', action='append',
-                        help='Volume mounts passed directly to docker -v')
+                        help=f'Volume mounts passed directly to {RUNNER} -v')
     parser.add_argument('--rm', action='store_true',
                         help='Destroy the container on exit')
     parser.add_argument('--syslog', action='store_true',
                         help='Enable syslog to host by mounting in /dev/log')
     parser.add_argument('--name', help='Assign a name to the container')
     parser.add_argument('--ulimit', action='append',
-                        help='Ulimit options passed directly to docker run')
+                        help=f'Ulimit options passed directly to {RUNNER} run')
     parser.add_argument('-a', '--enablerepo',
                         help='additional repositories to enable before installing build dependencies. '
                              'Same syntax as yum\'s --enablerepo parameter. Available additional repositories: '
