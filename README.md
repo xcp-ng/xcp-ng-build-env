@@ -101,11 +101,6 @@ optional arguments:
 
 **Examples**
 
-Rebuild an existing source RPM (with automated installation of the build dependencies)
-```sh
-./run.py -b 8.0 --rebuild-srpm /path/to/some-source-rpm.src.rpm --output-dir /path/to/output/directory --rm
-```
-
 Build from git (and put the result into RPMS/ and SRPMS/ subdirectories)
 ```sh
 # Find the relevant repository at https://github.com/xcp-ng-rpms/
@@ -135,15 +130,15 @@ fully automated.
 1. modify the specfile to add `-Squilt` to `%autosetup` or
    `%autopatch` in the `%prep` block; add `BuildRequires: quilt`
 2. let quilt apply them in a 8.3 buildenv (`quilt` in 8.3 is only in EPEL) and get you a shell:
-   ```
-xcpng/build-env/run.py --rm -b 8.3 -l . --rpmbuild-stage=p -n --enablerepo=epel
-   ```
+```sh
+xcp-ng-dev --rm -b 8.3 -l . --rpmbuild-stage=p -n --enablerepo=epel
+```
 3. ask `quilt` to refresh all your patches (alternatively just the one you want)
-   ```
-$ cd rpmbuild/BUILD/$dir
-$ quilt pop -a --refresh
-$ cp patches/* ../../SOURCES/
-   ```
+```sh
+cd rpmbuild/BUILD/$dir
+quilt pop -a --refresh
+cp patches/* ../../SOURCES/
+```
 4. carefully pick up the bits you need
 
 Note: unfortunately `rpmbuild` (in 8.3 at least) does not add all
