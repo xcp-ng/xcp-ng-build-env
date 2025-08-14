@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# PYTHON_ARGCOMPLETE_OK
 
 """
 Thin wrapper around "docker run" or "podman run".
@@ -13,6 +14,7 @@ import subprocess
 import shutil
 import sys
 import uuid
+import argcomplete
 
 CONTAINER_PREFIX = "ghcr.io/xcp-ng/xcp-ng-build-env"
 
@@ -220,6 +222,8 @@ def container(args):
 def main():
     """ Main entry point. """
     parser = buildparser()
+
+    argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
 

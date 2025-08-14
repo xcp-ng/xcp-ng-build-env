@@ -54,6 +54,20 @@ like `pipx install --editable .`
 If you do not want this behaviour, use: `uv tool install --from . xcp-ng-dev`
 or `pipx install .`
 
+## Completion
+
+### Bash
+
+To install the completion, add `eval "$(register-python-argcomplete xcp-ng-dev)"` to `~/.bash_completion` and relaunch Bash.
+
+### Zsh
+
+To install the completion, add `eval "$(register-python-argcomplete xcp-ng-dev)"` to `~/.zshrc` and relaunch Zsh.
+
+### Fish
+
+To install the completion, run `register-python-argcomplete --shell fish xcp-ng-dev > ~/.config/fish/completions/xcp-ng-dev.fish` and relaunch fish.
+
 ## Building the container image(s)
 
 You need one container image per target version of XCP-ng.
