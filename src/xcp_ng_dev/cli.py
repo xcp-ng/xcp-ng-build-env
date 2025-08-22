@@ -18,7 +18,6 @@ import argcomplete
 
 CONTAINER_PREFIX = "ghcr.io/xcp-ng/xcp-ng-build-env"
 
-DEFAULT_BRANCH = '8.3'
 DEFAULT_ULIMIT_NOFILE = 2048
 RPMBUILD_STAGES = "abpfcilsrd"  # valid X values in `rpmbuild -bX`
 
@@ -40,9 +39,8 @@ def is_podman(runner):
     return False
 
 def add_common_args(parser):
-    parser.add_argument('-b', '--branch',
-                        help='XCP-ng version: 7.6, %s, etc. If not set, '
-                             'will default to %s.' % (DEFAULT_BRANCH, DEFAULT_BRANCH))
+    parser.add_argument('branch',
+                        help='The version of XCP-ng to prepare for the build. For example, 8.3.')
     parser.add_argument('-n', '--no-exit', action='store_true',
                         help='After finishing the execution of the action, drop user into a shell')
     parser.add_argument('-d', '--dir', action='append',
@@ -125,11 +123,13 @@ def buildparser():
     parser_run = subparsers_container.add_parser(
         'run',
         help='Execute a command inside a container')
-    parser_run.add_argument(
-        'command', nargs=argparse.REMAINDER,
-        help='Command to run inside the prepared container')
     add_container_args(parser_run)
     add_common_args(parser_run)
+    parser_run.add_argument(
+        'command', nargs='*',
+        help='Command with arguments to run inside the container, '
+             'if the command has arguments that start with --, '
+             'separate the arguments for this tool and the command with " -- ".')
 
     # shell -- like run bash
     parser_shell = argparse.ArgumentParser()
@@ -143,7 +143,7 @@ def buildparser():
 
 def container(args):
     build = args.action == 'build'
-    branch = args.branch or DEFAULT_BRANCH
+    branch = args.branch
     docker_arch = args.platform or ("linux/amd64/v2" if branch == "9.0" else "linux/amd64")
 
     docker_args = [RUNNER, "run", "-i", "-t",
