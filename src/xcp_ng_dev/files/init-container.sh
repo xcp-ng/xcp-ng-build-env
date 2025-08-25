@@ -46,6 +46,13 @@ case "$OS_RELEASE" in
     *) echo >&2 "ERROR: unknown release, cannot know package manager"; exit 1 ;;
 esac
 
+# disable upstream repositories if needed
+if [ "$DISABLE_UPSTREAM_REPOS" == "true" ]; then
+    for repo in $UPSTREAM_REPOS; do
+        sudo $CFGMGR --disable "$repo"
+    done
+fi
+
 # disable repositories if needed
 if [ -n "$DISABLEREPO" ]; then
     sudo $CFGMGR --disable "$DISABLEREPO"
