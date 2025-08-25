@@ -49,6 +49,8 @@ RUN     dnf install -y \
             xcp-ng-release \
             xcp-ng-release-presets
 
+ENV     UPSTREAM_REPOS="appstream baseos crb epel extras alma10-devel"
+
 # enable repositories commonly required to build
 RUN     dnf config-manager --enable crb
 
