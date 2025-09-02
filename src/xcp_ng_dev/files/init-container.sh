@@ -54,8 +54,10 @@ if [ -n "$ENABLEREPO" ]; then
     sudo $CFGMGR --enable "$ENABLEREPO"
 fi
 
-# update to either install newer updates or to take packages from added repos into account
-sudo $DNF update -y --disablerepo=epel
+if [ -z "$NOUPDATE" ]; then
+    # update to either install newer updates or to take packages from added repos into account
+    sudo $DNF update -y --disablerepo=epel
+fi
 
 cd "$HOME"
 

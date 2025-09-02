@@ -56,6 +56,8 @@ def add_common_args(parser):
     parser.add_argument('--disablerepo',
                         help='disable repositories. Same syntax as yum\'s --disablerepo parameter. '
                              'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
+    parser.add_argument('--no-update', action='store_true',
+                        help='do not run "yum update" on container start, use it as it was at build time')
 
 def add_container_args(parser):
     parser.add_argument('-v', '--volume', action='append',
@@ -204,6 +206,9 @@ def container(args):
         docker_args += ["-e", "ENABLEREPO=%s" % args.enablerepo]
     if args.disablerepo:
         docker_args += ["-e", "DISABLEREPO=%s" % args.disablerepo]
+    if args.no_update:
+        docker_args += ["-e", "NOUPDATE=1"]
+
     ulimit_nofile = False
     if args.ulimit:
         for ulimit in args.ulimit:
