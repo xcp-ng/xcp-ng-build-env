@@ -97,8 +97,10 @@ def buildparser():
              "of the directory passed as parameter, then build the RPM(s). "
              "Built RPMs and SRPMs will be in RPMS/ and SRPMS/ subdirectories. "
              "Any preexisting BUILD, BUILDROOT, RPMS or SRPMS directories will be removed first.")
-    parser_build.add_argument('build_local',
-                              help="Root path where SPECS/ and SOURCES are available")
+    parser_build.add_argument(
+        'build_local', nargs='?', default='.',
+        help="Root path where SPECS/ and SOURCES are available. "
+             "The default is the working directory")
     parser_build.add_argument(
         '--define',
         help="Definitions to be passed to rpmbuild. Example: --define "
@@ -154,9 +156,10 @@ def container(args):
     if hasattr(args, 'command') and args.command != []:
         docker_args += ["-e", "COMMAND=%s" % ' '.join(args.command)]
     if build:
-        docker_args += ["-v", "%s:/home/builder/rpmbuild" %
-                        os.path.abspath(args.build_local)]
+        build_dir = os.path.abspath(args.build_local)
+        docker_args += ["-v", f"{build_dir}:/home/builder/rpmbuild"]
         docker_args += ["-e", "BUILD_LOCAL=1"]
+        print(f"Building directory {build_dir}")
     if hasattr(args, 'define') and args.define:
         docker_args += ["-e", "RPMBUILD_DEFINE=%s" % args.define]
     if hasattr(args, 'rpmbuild_opts') and args.rpmbuild_opts:
