@@ -119,6 +119,23 @@ def buildparser():
         '--rpmbuild-stage', action='store',
         help=f"Request given -bX stage rpmbuild, X in [{RPMBUILD_STAGES}]")
 
+    # builddep -- fetch/cache builddep of an rpm using a container
+    parser_builddep = subparsers_container.add_parser(
+        'builddep',
+        help="Fetch dependencies for the spec file(s) found in the SPECS/ subdirectory "
+             "of the directory passed as parameter.")
+    add_container_args(parser_builddep)
+    add_common_args(parser_builddep)
+    group_builddep = parser_builddep.add_argument_group("builddep arguments")
+    group_builddep.add_argument(
+        'builddep_dir',
+        help="Directory where the build-dependency RPMs will be cached. "
+             "The directory is created if it doesn't exist")
+    group_builddep.add_argument(
+        'source_dir', nargs='?', default='.',
+        help="Root path where SPECS/ and SOURCES are available. "
+             "The default is the working directory")
+
     # run -- execute commands inside a container
     parser_run = subparsers_container.add_parser(
         'run',
@@ -225,6 +242,16 @@ def container(args):
             docker_args += ["-v", f"{build_dir}:/home/builder/rpmbuild"]
             docker_args += ["-e", "BUILD_LOCAL=1"]
             print(f"Building directory {build_dir}", file=sys.stderr)
+
+        case 'builddep':
+            build_dir = os.path.abspath(args.source_dir)
+            docker_args += ["-v", f"{build_dir}:/home/builder/rpmbuild"]
+            docker_args += ["-e", "BUILD_DEPS=1"]
+
+            if args.builddep_dir:
+                os.makedirs(args.builddep_dir, exist_ok=True)
+                docker_args += ["-v", "%s:/home/builder/builddep:rw" %
+                                os.path.abspath(args.builddep_dir)]
 
         case 'run':
             docker_args += ["-e", "COMMAND=%s" % ' '.join(args.command)]

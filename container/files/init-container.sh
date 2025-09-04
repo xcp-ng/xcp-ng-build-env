@@ -69,10 +69,12 @@ ulimit -s 16384
 # get the package arch used in the container (eg. "x86_64_v2")
 RPMARCH=$(rpm -q glibc --qf "%{arch}")
 
-if [ -n "$BUILD_LOCAL" ]; then
+if [ -n "$BUILD_LOCAL$BUILD_DEPS" ]; then
     time (
         cd ~/rpmbuild
-        rm BUILD BUILDROOT RPMS SRPMS -rf
+        if [ -n "$BUILD_LOCAL" ]; then
+            rm BUILD BUILDROOT RPMS SRPMS -rf
+        fi
 
         if specs=$(ls *.spec 2>/dev/null); then
             SPECFLAGS=(
@@ -88,28 +90,40 @@ if [ -n "$BUILD_LOCAL" ]; then
 
         case "$OS_RELEASE" in
             8.2.*|8.3.*) ;; # sources always available via git-lfs
-            8.99.*|9.*) if [ -r sources ]; then alma_get_sources -i sources; fi ;;
+            8.99.*|9.*)
+                if [ -r sources ]; then alma_get_sources -i sources; fi
+                # FIXME: if [ -n "$BUILD_DEPS" ]; then exfiltrate alma_get_sources
+                ;;
             *) echo >&2 "ERROR: unknown release, cannot know package manager"; exit 1 ;;
         esac
 
-        sudo $BDEP "${SPECFLAGS[@]}" -y $specs
-
-        : ${RPMBUILD_STAGE:=a}  # default if not specified: -ba
-        RPMBUILDFLAGS=(
-            -b${RPMBUILD_STAGE} $specs
-            --target "$RPMARCH"
-            $RPMBUILD_OPTS
-            "${SPECFLAGS[@]}"
-        )
-        # in case the build deps contain xs-opam-repo, source the added profile.d file
-        [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
-        if [ $? == 0 ]; then
-            if [ -n "$RPMBUILD_DEFINE" ]; then
-                RPMBUILDFLAGS+=(--define "$RPMBUILD_DEFINE")
+        if [ -n "$BUILD_DEPS" ]; then
+            BDEPFLAGS=()
+            if [ -d ~/builddep/ ]; then
+                BDEPFLAGS+=(--downloaddir ~/builddep/)
             fi
-            rpmbuild "${RPMBUILDFLAGS[@]}"
-            if [ $? == 0 -a -d ~/output/ ]; then
-                cp -rf RPMS SRPMS ~/output/
+            sudo $BDEP "${SPECFLAGS[@]}" --downloadonly "${BDEPFLAGS[@]}" -y $specs
+        fi
+
+        if [ -n "$BUILD_LOCAL" ]; then
+            sudo $BDEP "${SPECFLAGS[@]}" -y $specs
+            : ${RPMBUILD_STAGE:=a}  # default if not specified: -ba
+            RPMBUILDFLAGS=(
+                -b${RPMBUILD_STAGE} $specs
+                --target "$RPMARCH"
+                $RPMBUILD_OPTS
+                "${SPECFLAGS[@]}"
+            )
+            # in case the build deps contain xs-opam-repo, source the added profile.d file
+            [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
+            if [ $? == 0 ]; then
+                if [ -n "$RPMBUILD_DEFINE" ]; then
+                    RPMBUILDFLAGS+=(--define "$RPMBUILD_DEFINE")
+                fi
+                rpmbuild "${RPMBUILDFLAGS[@]}"
+                if [ $? == 0 -a -d ~/output/ ]; then
+                    cp -rf RPMS SRPMS ~/output/
+                fi
             fi
         fi
     )
