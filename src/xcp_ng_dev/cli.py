@@ -172,9 +172,7 @@ def container(args):
             sys.exit(1)
         docker_args += ["-e", f"RPMBUILD_STAGE={args.rpmbuild_stage}"]
     if hasattr(args, 'output_dir') and args.output_dir:
-        if not os.path.isdir(args.output_dir):
-            print(f"{args.output_dir} is not a valid output directory.", file=sys.stderr)
-            sys.exit(1)
+        os.makedirs(args.output_dir, exist_ok=True)
         docker_args += ["-v", "%s:/home/builder/output" %
                         os.path.abspath(args.output_dir)]
     if args.no_exit:
