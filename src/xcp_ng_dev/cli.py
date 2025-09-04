@@ -144,7 +144,6 @@ def buildparser():
     return parser
 
 def container(args):
-    build = args.action == 'build'
     branch = args.branch
     docker_arch = args.platform or ("linux/amd64/v2" if branch == "9.0" else "linux/amd64")
 
@@ -159,7 +158,7 @@ def container(args):
 
     if hasattr(args, 'command') and args.command != []:
         docker_args += ["-e", "COMMAND=%s" % ' '.join(args.command)]
-    if build:
+    if args.action == 'build':
         build_dir = os.path.abspath(args.source_dir)
         docker_args += ["-v", f"{build_dir}:/home/builder/rpmbuild"]
         docker_args += ["-e", "BUILD_LOCAL=1"]
