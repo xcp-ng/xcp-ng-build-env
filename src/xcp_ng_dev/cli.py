@@ -120,6 +120,22 @@ def buildparser():
     add_container_args(parser_build)
     add_common_args(parser_build)
 
+    # builddep -- fetch/cache builddep of an rpm using a container
+    parser_builddep = subparsers_container.add_parser(
+        'builddep',
+        help="Fetch dependencies for the spec file(s) found in the SPECS/ subdirectory "
+             "of the directory passed as parameter.")
+    parser_builddep.add_argument(
+        'build_local', nargs='?', default='.',
+        help="Root path where SPECS/ and SOURCES are available. "
+             "The default is the working directory")
+    add_container_args(parser_builddep)
+    add_common_args(parser_builddep)
+    parser_builddep.add_argument(
+        'builddep_dir',
+        help="Directory where the build-dependency RPMs will be cached. "
+             "The directory is created if it doesn't exist")
+
     # run -- execute commands inside a container
     parser_run = subparsers_container.add_parser(
         'run',
@@ -157,11 +173,18 @@ def container(args):
 
     if hasattr(args, 'command') and args.command != []:
         docker_args += ["-e", "COMMAND=%s" % ' '.join(args.command)]
-    if args.action == 'build':
+    if args.action in ('build', 'builddep'):
         build_dir = os.path.abspath(args.build_local)
-        docker_args += ["-v", f"{build_dir}:/home/builder/rpmbuild"]
-        docker_args += ["-e", "BUILD_LOCAL=1"]
         print(f"Building directory {build_dir}")
+        docker_args += ["-v", f"{build_dir}:/home/builder/rpmbuild"]
+        match args.action:
+            case 'build':
+                docker_args += ["-e", "BUILD_LOCAL=1"]
+            case 'builddep':
+                docker_args += ["-e", "BUILD_DEPS=1"]
+            case _:
+                print(f"unhandled action {args.action}", file=sys.stderr)
+                sys.exit(1)
     if hasattr(args, 'define') and args.define:
         docker_args += ["-e", "RPMBUILD_DEFINE=%s" % args.define]
     if hasattr(args, 'rpmbuild_opts') and args.rpmbuild_opts:
@@ -175,6 +198,10 @@ def container(args):
         os.makedirs(args.output_dir, exist_ok=True)
         docker_args += ["-v", "%s:/home/builder/output" %
                         os.path.abspath(args.output_dir)]
+    if hasattr(args, 'builddep_dir') and args.builddep_dir:
+        os.makedirs(args.builddep_dir, exist_ok=True)
+        docker_args += ["-v", "%s:/home/builder/builddep" %
+                        os.path.abspath(args.builddep_dir)]
     if args.no_exit:
         docker_args += ["-e", "NO_EXIT=1"]
     if args.fail_on_error:
