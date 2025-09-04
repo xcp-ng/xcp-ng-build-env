@@ -4,7 +4,7 @@ set -eux
 
 TARGET_XCP_NG_VERSION="8.2"
 
-./build.sh "$TARGET_XCP_NG_VERSION"
+xcp-ng-dev-env-create "$TARGET_XCP_NG_VERSION"
 
 REPOS=xcp-emu-manager
 
@@ -14,10 +14,9 @@ for REPO in ${REPOS}; do
     REPO_PATH=/tmp/"$REPO"
     git clone --branch "$TARGET_XCP_NG_VERSION" https://github.com/xcp-ng-rpms/"$REPO" "$REPO_PATH"
 
-    ./run.py --name "$CONTAINER_NAME" \
+    xcp-ng-dev container build "$REPO_PATH" "$TARGET_XCP_NG_VERSION" \
+        --name "$CONTAINER_NAME" \
         --fail-on-error \
-        -l "$REPO_PATH" \
-        -b "$TARGET_XCP_NG_VERSION" \
         --rm
 
     rm -rf "$REPO_PATH"
