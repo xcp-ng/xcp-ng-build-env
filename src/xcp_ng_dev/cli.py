@@ -221,7 +221,7 @@ def container(args):
     # exec "docker run"
     docker_args += ["%s:%s" % (CONTAINER_PREFIX, branch),
                     "/usr/local/bin/init-container.sh"]
-    print("Launching docker with args %s" % docker_args, file=sys.stderr)
+    print("Launching docker with args %s" % docker_args)
     return subprocess.call(docker_args)
 
 def main():
