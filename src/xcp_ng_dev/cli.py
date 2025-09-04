@@ -169,7 +169,8 @@ def container(args):
         docker_args += ["-e", "RPMBUILD_OPTS=%s" % ' '.join(args.rpmbuild_opts)]
     if hasattr(args, 'rpmbuild_stage') and args.rpmbuild_stage:
         if args.rpmbuild_stage not in RPMBUILD_STAGES:
-            parser.error(f"--rpmbuild-stage={args.rpmbuild_stage} not in '{RPMBUILD_STAGES}'")
+            print(f"--rpmbuild-stage={args.rpmbuild_stage} not in '{RPMBUILD_STAGES}'", file=sys.stderr)
+            sys.exit(1)
         docker_args += ["-e", f"RPMBUILD_STAGE={args.rpmbuild_stage}"]
     if hasattr(args, 'output_dir') and args.output_dir:
         if not os.path.isdir(args.output_dir):
