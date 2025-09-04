@@ -13,7 +13,6 @@ import os
 import subprocess
 import shutil
 import sys
-import uuid
 import argcomplete
 
 CONTAINER_PREFIX = "ghcr.io/xcp-ng/xcp-ng-build-env"
