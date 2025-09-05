@@ -11,7 +11,7 @@ REPOS=xcp-emu-manager
 CONTAINER_NAME=${CONTAINER_NAME:-build-env}
 
 for REPO in ${REPOS}; do
-    REPO_PATH=/tmp/"$REPO"
+    REPO_PATH=$(mktemp --directory --tmpdir xcp-buildenv-test.XXXXXX)
     trap "rm -rf '$REPO_PATH'" EXIT
     git clone --branch "$TARGET_XCP_NG_VERSION" https://github.com/xcp-ng-rpms/"$REPO" "$REPO_PATH"
 
