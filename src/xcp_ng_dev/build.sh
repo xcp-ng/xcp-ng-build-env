@@ -85,9 +85,11 @@ case "$1" in
         ;;
 esac
 
+version=`cat ./files/version.txt | tr -d '\n'`
+
 "$RUNNER" build \
     --platform "$PLATFORM" \
-    -t ghcr.io/xcp-ng/xcp-ng-build-env:${1} \
+    -t ghcr.io/xcp-ng/xcp-ng-build-env:${1}-${version} \
     --build-arg XCP_NG_BRANCH=${1} \
     --ulimit nofile=1024 \
     -f $DOCKERFILE .
