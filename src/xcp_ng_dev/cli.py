@@ -13,6 +13,8 @@ import os
 import subprocess
 import shutil
 import sys
+from pathlib import Path
+
 import argcomplete
 
 CONTAINER_PREFIX = "ghcr.io/xcp-ng/xcp-ng-build-env"
@@ -36,6 +38,10 @@ def is_podman(runner):
     if subprocess.getoutput(f"{runner} --version").startswith("podman "):
         return True
     return False
+
+def read_version():
+    with open(Path(__file__).parent / 'files/protocol-version.txt') as f:
+        return f.read().strip()
 
 def add_common_args(parser):
     group = parser.add_argument_group("common arguments")
@@ -235,7 +241,7 @@ def container(args):
             pass
 
     # exec "docker run"
-    docker_args += [f"{CONTAINER_PREFIX}:{args.container_version}",
+    docker_args += [f"{CONTAINER_PREFIX}:{args.container_version}-{read_version()}",
                     "/usr/local/bin/init-container.sh"]
     print("Launching docker with args %s" % docker_args, file=sys.stderr)
     return subprocess.call(docker_args)
