@@ -133,7 +133,6 @@ def buildparser():
              'separate the arguments for this tool and the command with " -- ".')
 
     # shell -- like run bash
-    parser_shell = argparse.ArgumentParser()
     parser_shell = subparsers_container.add_parser(
         'shell',
         help='Drop a shell into the prepared container')
