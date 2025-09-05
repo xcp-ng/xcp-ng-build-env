@@ -53,6 +53,8 @@ def add_common_args(parser):
     group.add_argument('--disablerepo',
                        help='disable repositories. Same syntax as yum\'s --disablerepo parameter. '
                        'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
+    group.add_argument('--local-repo', action='append', default=[],
+                       help="Directory where the build-dependency RPMs will be taken from.")
     group.add_argument('--no-update', action='store_true',
                        help='do not run "yum update" on container start, use it as it was at build time')
 
@@ -159,6 +161,24 @@ def buildparser():
 
     return parser
 
+def _setup_repo(repo_dir, name, docker_args):
+    subprocess.check_call(["createrepo_c", "--compatibility", repo_dir])
+    outer_path = os.path.abspath(repo_dir)
+    inner_path = f"/home/builder/local-repos/{name}"
+    docker_args += ["-v", f"{outer_path}:{inner_path}:ro" ]
+    with open(os.path.join(repo_dir, "builddep.repo"), "wt") as repofd:
+        repofd.write(f"""
+[{name}]
+name=Local repository - {name} from {outer_path}
+baseurl=file:///home/builder/local-repos/{name}/
+enabled=1
+repo_gpgcheck=0
+gpgcheck=0
+priority=1
+        """)
+    # need rw for --disablerepo=* --enablerepo=builddeb <sigh>
+    docker_args += ["-v", f"{outer_path}/builddep.repo:/etc/yum.repos.d/{name}.repo:rw"]
+
 def container(args):
     docker_args = [RUNNER, "run", "-i", "-t"]
 
@@ -220,6 +240,10 @@ def container(args):
 
     if args.debug:
         docker_args += ["-e", "SCRIPT_DEBUG=1"]
+
+    for repo in args.local_repo:
+        # FIXME: ensure name is unique
+        _setup_repo(repo, os.path.basename(repo), docker_args)
 
     # action-specific
     match args.action:
