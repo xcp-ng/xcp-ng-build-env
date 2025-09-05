@@ -37,7 +37,9 @@ def is_podman(runner):
         return True
     return False
 
-def add_common_args(parser):
+def buildparser():
+    parser = argparse.ArgumentParser()
+
     parser.add_argument('-n', '--no-exit', action='store_true',
                         help='After finishing the execution of the action, drop user into a shell')
     parser.add_argument('-d', '--dir', action='append',
@@ -56,7 +58,19 @@ def add_common_args(parser):
     parser.add_argument('--no-update', action='store_true',
                         help='do not run "yum update" on container start, use it as it was at build time')
 
-def add_container_args(parser):
+    subparsers_env = parser.add_subparsers(
+        required=True, title="Development environments",
+        help="Available environments")
+
+    # container-based workflow
+    build_subparser_container(subparsers_env)
+
+    return parser
+
+def build_subparser_container(subparsers):
+    parser = subparsers.add_parser('container', help="Use a local container to build a package")
+    parser.set_defaults(func=container)
+
     parser.add_argument('container_version',
                         help='The version of XCP-ng container to for the build. For example, 8.3.')
     parser.add_argument('-v', '--volume', action='append',
@@ -77,24 +91,21 @@ def add_container_args(parser):
     parser.add_argument('--debug', action='store_true',
                         help='Enable script tracing in container initialization (sh -x)')
 
-
-def buildparser():
-    parser = argparse.ArgumentParser()
-    add_common_args(parser)
-    subparsers_env = parser.add_subparsers(
-        required=True, title="Development environments",
-        help="Available environments")
-
-    # container-based workflow
-    parser_container = subparsers_env.add_parser('container', help="Use a local container to build a package")
-    parser_container.set_defaults(func=container)
-    add_container_args(parser_container)
-    subparsers_container = parser_container.add_subparsers(
+    subparsers_container = parser.add_subparsers(
         dest='action', required=True,
         help="Actions available for developing packages")
 
     # build -- build an rpm using a container
-    parser_build = subparsers_container.add_parser(
+    build_subparser_build(subparsers_container)
+    # run -- execute commands inside a container
+    build_subparser_run(subparsers_container)
+    # shell -- like run bash
+    build_subparser_shell(subparsers_container)
+
+    return parser
+
+def build_subparser_build(subparsers):
+    parser_build = subparsers.add_parser(
         'build',
         help="Install dependencies for the spec file(s) found in the SPECS/ subdirectory "
              "of the directory passed as parameter, then build the RPM(s). "
@@ -120,8 +131,10 @@ def buildparser():
         '--rpmbuild-stage', action='store',
         help=f"Request given -bX stage rpmbuild, X in [{RPMBUILD_STAGES}]")
 
-    # run -- execute commands inside a container
-    parser_run = subparsers_container.add_parser(
+    return parser_build
+
+def build_subparser_run(subparsers):
+    parser_run = subparsers.add_parser(
         'run',
         help='Execute a command inside a container')
     parser_run.add_argument(
@@ -130,12 +143,14 @@ def buildparser():
              'if the command has arguments that start with --, '
              'separate the arguments for this tool and the command with " -- ".')
 
-    # shell -- like run bash
-    parser_shell = subparsers_container.add_parser(
+    return parser_run
+
+def build_subparser_shell(subparsers):
+    parser_shell = subparsers.add_parser(
         'shell',
         help='Drop a shell into the prepared container')
 
-    return parser
+    return parser_shell
 
 def container(args):
     docker_args = [RUNNER, "run", "-i", "-t",
