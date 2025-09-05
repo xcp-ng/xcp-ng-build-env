@@ -199,28 +199,34 @@ def container(args):
     if args.debug:
         docker_args += ["-e", "SCRIPT_DEBUG=1"]
 
-    # action args
-    if hasattr(args, 'command') and args.command != []:
-        docker_args += ["-e", "COMMAND=%s" % ' '.join(args.command)]
-    if args.action == 'build':
-        build_dir = os.path.abspath(args.source_dir)
-        docker_args += ["-v", f"{build_dir}:/home/builder/rpmbuild"]
-        docker_args += ["-e", "BUILD_LOCAL=1"]
-        print(f"Building directory {build_dir}", file=sys.stderr)
-    if hasattr(args, 'define') and args.define:
-        docker_args += ["-e", "RPMBUILD_DEFINE=%s" % args.define]
-    if hasattr(args, 'rpmbuild_opts') and args.rpmbuild_opts:
-        docker_args += ["-e", "RPMBUILD_OPTS=%s" % ' '.join(args.rpmbuild_opts)]
-    if hasattr(args, 'rpmbuild_stage') and args.rpmbuild_stage:
-        if args.rpmbuild_stage not in RPMBUILD_STAGES:
-            print(f"--rpmbuild-stage={args.rpmbuild_stage} not in '{RPMBUILD_STAGES}'", file=sys.stderr)
-            sys.exit(1)
-        docker_args += ["-e", f"RPMBUILD_STAGE={args.rpmbuild_stage}"]
-    if hasattr(args, 'output_dir') and args.output_dir:
-        os.makedirs(args.output_dir, exist_ok=True)
-        docker_args += ["-v", "%s:/home/builder/output" %
-                        os.path.abspath(args.output_dir)]
+    # action-specific
+    match args.action:
+        case 'build':
+            build_dir = os.path.abspath(args.source_dir)
+            if args.define:
+                docker_args += ["-e", "RPMBUILD_DEFINE=%s" % args.define]
+            if args.output_dir:
+                os.makedirs(args.output_dir, exist_ok=True)
+                docker_args += ["-v", "%s:/home/builder/output" %
+                                os.path.abspath(args.output_dir)]
+            if args.rpmbuild_opts:
+                docker_args += ["-e", "RPMBUILD_OPTS=%s" % ' '.join(args.rpmbuild_opts)]
+            if args.rpmbuild_stage:
+                if args.rpmbuild_stage not in RPMBUILD_STAGES:
+                    print(f"--rpmbuild-stage={args.rpmbuild_stage} not in '{RPMBUILD_STAGES}'", file=sys.stderr)
+                    sys.exit(1)
+                docker_args += ["-e", f"RPMBUILD_STAGE={args.rpmbuild_stage}"]
 
+            docker_args += ["-v", f"{build_dir}:/home/builder/rpmbuild"]
+            docker_args += ["-e", "BUILD_LOCAL=1"]
+            print(f"Building directory {build_dir}", file=sys.stderr)
+
+        case 'run':
+            docker_args += ["-e", "COMMAND=%s" % ' '.join(args.command)]
+
+        case 'shell':
+            # no argument
+            pass
 
     # exec "docker run"
     docker_args += [f"{CONTAINER_PREFIX}:{args.container_version}",
