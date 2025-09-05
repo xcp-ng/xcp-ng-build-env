@@ -61,8 +61,8 @@ def add_common_args(parser):
 def add_container_args(parser):
     parser.add_argument('-v', '--volume', action='append',
                         help=f'Volume mounts passed directly to {RUNNER} -v')
-    parser.add_argument('--rm', action='store_true',
-                        help='Destroy the container on exit')
+    parser.add_argument('--no-rm', action='store_true',
+                        help='Do not destroy the container on exit')
     parser.add_argument('--syslog', action='store_true',
                         help='Enable syslog to host by mounting in /dev/log')
     parser.add_argument('--name', help='Assign a name to the container')
@@ -151,7 +151,7 @@ def container(args):
                    ]
     if is_podman(RUNNER):
         docker_args += ["--userns=keep-id", "--security-opt", "label=disable"]
-    if args.rm:
+    if not args.no_rm:
         docker_args += ["--rm=true"]
 
     if hasattr(args, 'command') and args.command != []:

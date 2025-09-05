@@ -17,6 +17,5 @@ for REPO in ${REPOS}; do
 
     xcp-ng-dev container build "$TARGET_XCP_NG_VERSION" "$REPO_PATH" \
         --name "$CONTAINER_NAME" \
-        --fail-on-error \
-        --rm
+        --fail-on-error
 done
