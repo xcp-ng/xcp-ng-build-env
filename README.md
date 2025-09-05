@@ -100,7 +100,7 @@ git clone https://github.com/xcp-ng-rpms/xapi.git
 # ... Here add your patches ...
 
 # Build.
-xcp-ng-dev container build --rm xapi/ 8.2
+xcp-ng-dev container build --rm 8.2 xapi/
 ```
 
 **Important switches**

@@ -98,6 +98,8 @@ def buildparser():
              "of the directory passed as parameter, then build the RPM(s). "
              "Built RPMs and SRPMs will be in RPMS/ and SRPMS/ subdirectories. "
              "Any preexisting BUILD, BUILDROOT, RPMS or SRPMS directories will be removed first.")
+    add_container_args(parser_build)
+    add_common_args(parser_build)
     parser_build.add_argument(
         'source_dir', nargs='?', default='.',
         help="Root path where SPECS/ and SOURCES are available. "
@@ -117,8 +119,6 @@ def buildparser():
     parser_build.add_argument(
         '--rpmbuild-stage', action='store',
         help=f"Request given -bX stage rpmbuild, X in [{RPMBUILD_STAGES}]")
-    add_container_args(parser_build)
-    add_common_args(parser_build)
 
     # run -- execute commands inside a container
     parser_run = subparsers_container.add_parser(
