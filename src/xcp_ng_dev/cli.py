@@ -10,8 +10,8 @@ Simplifies the creation of a build environment for XCP-ng packages.
 
 import argparse
 import os
-import subprocess
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -35,9 +35,7 @@ if RUNNER is None:
 def is_podman(runner):
     if os.path.basename(runner) == "podman":
         return True
-    if subprocess.getoutput(f"{runner} --version").startswith("podman "):
-        return True
-    return False
+    return subprocess.getoutput(f"{runner} --version").startswith("podman ")
 
 def read_version():
     with open(Path(__file__).parent / 'files/version.txt') as f:
