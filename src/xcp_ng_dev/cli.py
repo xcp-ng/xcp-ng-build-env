@@ -119,6 +119,9 @@ def buildparser():
     group_build.add_argument(
         '--rpmbuild-stage', action='store',
         help=f"Request given -bX stage rpmbuild, X in [{RPMBUILD_STAGES}]")
+    parser_build.add_argument(
+        '--builddep-dir',
+        help="Directory where the build-dependency RPMs will be taken from.")
 
     # builddep -- fetch/cache builddep of an rpm using a container
     parser_builddep = subparsers_container.add_parser(
@@ -239,6 +242,22 @@ def container(args):
                     print(f"--rpmbuild-stage={args.rpmbuild_stage} not in '{RPMBUILD_STAGES}'", file=sys.stderr)
                     sys.exit(1)
                 docker_args += ["-e", f"RPMBUILD_STAGE={args.rpmbuild_stage}"]
+            if args.builddep_dir:
+                subprocess.check_call(["createrepo_c", "--compatibility", args.builddep_dir])
+                docker_args += ["-v", "%s:/home/builder/builddep:ro" %
+                                os.path.abspath(args.builddep_dir)]
+                with open(os.path.join(args.builddep_dir, "builddep.repo"), "wt") as repofd:
+                    repofd.write("""
+[builddeps]
+name=Package build dependencies
+baseurl=file:///home/builder/builddep/
+enabled=1
+repo_gpgcheck=0
+gpgcheck=0
+                    """)
+                # need rw for --disablerepo=* --enablerepo=builddeb <sigh>
+                docker_args += ["-v", "%s/builddep.repo:/etc/yum.repos.d/builddep.repo:rw" %
+                                os.path.abspath(args.builddep_dir)]
 
             docker_args += ["-v", f"{build_dir}:/home/builder/rpmbuild"]
             docker_args += ["-e", "BUILD_LOCAL=1"]
