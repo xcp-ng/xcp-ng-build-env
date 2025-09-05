@@ -142,19 +142,64 @@ def buildparser():
     return parser
 
 def container(args):
-    docker_arch = args.platform or ("linux/amd64/v2"
-                                    if args.container_version == "9.0"
-                                    else "linux/amd64")
-
     docker_args = [RUNNER, "run", "-i", "-t",
                    "-u", "builder",
-                   "--platform", docker_arch,
                    ]
     if is_podman(RUNNER):
         docker_args += ["--userns=keep-id", "--security-opt", "label=disable"]
+
+    # common args
+    if args.no_exit:
+        docker_args += ["-e", "NO_EXIT=1"]
+    if args.dir:
+        for localdir in args.dir:
+            if not os.path.isdir(localdir):
+                print("Local directory argument is not a directory!", file=sys.stderr)
+                sys.exit(1)
+            ext_path = os.path.abspath(localdir)
+            int_path = os.path.basename(ext_path)
+            docker_args += ["-v", "%s:/external/%s" % (ext_path, int_path)]
+    if args.env:
+        for env in args.env:
+            docker_args += ["-e", env]
+    if args.enablerepo:
+        docker_args += ["-e", "ENABLEREPO=%s" % args.enablerepo]
+    if args.disablerepo:
+        docker_args += ["-e", "DISABLEREPO=%s" % args.disablerepo]
+    if args.no_update:
+        docker_args += ["-e", "NOUPDATE=1"]
+
+    # container args
+    if args.volume:
+        for volume in args.volume:
+            docker_args += ["-v", volume]
     if not args.no_rm:
         docker_args += ["--rm=true"]
+    if args.syslog:
+        docker_args += ["-v", "/dev/log:/dev/log"]
+    if args.name:
+        docker_args += ["--name", args.name]
 
+    ulimit_nofile = False
+    if args.ulimit:
+        for ulimit in args.ulimit:
+            if ulimit.startswith('nofile='):
+                ulimit_nofile = True
+            docker_args += ["--ulimit", ulimit]
+    if not ulimit_nofile:
+        docker_args += ["--ulimit", "nofile=%s" % DEFAULT_ULIMIT_NOFILE]
+
+    docker_arch = args.platform or ("linux/amd64/v2"
+                                    if args.container_version == "9.0"
+                                    else "linux/amd64")
+    docker_args += ["--platform", docker_arch]
+
+    if args.fail_on_error:
+        docker_args += ["-e", "FAIL_ON_ERROR=1"]
+    if args.debug:
+        docker_args += ["-e", "SCRIPT_DEBUG=1"]
+
+    # action args
     if hasattr(args, 'command') and args.command != []:
         docker_args += ["-e", "COMMAND=%s" % ' '.join(args.command)]
     if args.action == 'build':
@@ -175,45 +220,7 @@ def container(args):
         os.makedirs(args.output_dir, exist_ok=True)
         docker_args += ["-v", "%s:/home/builder/output" %
                         os.path.abspath(args.output_dir)]
-    if args.no_exit:
-        docker_args += ["-e", "NO_EXIT=1"]
-    if args.fail_on_error:
-        docker_args += ["-e", "FAIL_ON_ERROR=1"]
-    if args.debug:
-        docker_args += ["-e", "SCRIPT_DEBUG=1"]
-    if args.syslog:
-        docker_args += ["-v", "/dev/log:/dev/log"]
-    if args.name:
-        docker_args += ["--name", args.name]
-    if args.dir:
-        for localdir in args.dir:
-            if not os.path.isdir(localdir):
-                print("Local directory argument is not a directory!", file=sys.stderr)
-                sys.exit(1)
-            ext_path = os.path.abspath(localdir)
-            int_path = os.path.basename(ext_path)
-            docker_args += ["-v", "%s:/external/%s" % (ext_path, int_path)]
-    if args.volume:
-        for volume in args.volume:
-            docker_args += ["-v", volume]
-    if args.env:
-        for env in args.env:
-            docker_args += ["-e", env]
-    if args.enablerepo:
-        docker_args += ["-e", "ENABLEREPO=%s" % args.enablerepo]
-    if args.disablerepo:
-        docker_args += ["-e", "DISABLEREPO=%s" % args.disablerepo]
-    if args.no_update:
-        docker_args += ["-e", "NOUPDATE=1"]
 
-    ulimit_nofile = False
-    if args.ulimit:
-        for ulimit in args.ulimit:
-            if ulimit.startswith('nofile='):
-                ulimit_nofile = True
-            docker_args += ["--ulimit", ulimit]
-    if not ulimit_nofile:
-        docker_args += ["--ulimit", "nofile=%s" % DEFAULT_ULIMIT_NOFILE]
 
     # exec "docker run"
     docker_args += [f"{CONTAINER_PREFIX}:{args.container_version}",
