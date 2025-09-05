@@ -80,6 +80,7 @@ def add_container_args(parser):
 
 def buildparser():
     parser = argparse.ArgumentParser()
+    add_common_args(parser)
     subparsers_env = parser.add_subparsers(
         required=True, title="Development environments",
         help="Available environments")
@@ -87,6 +88,7 @@ def buildparser():
     # container-based workflow
     parser_container = subparsers_env.add_parser('container', help="Use a local container to build a package")
     parser_container.set_defaults(func=container)
+    add_container_args(parser_container)
     subparsers_container = parser_container.add_subparsers(
         dest='action', required=True,
         help="Actions available for developing packages")
@@ -98,8 +100,6 @@ def buildparser():
              "of the directory passed as parameter, then build the RPM(s). "
              "Built RPMs and SRPMs will be in RPMS/ and SRPMS/ subdirectories. "
              "Any preexisting BUILD, BUILDROOT, RPMS or SRPMS directories will be removed first.")
-    add_container_args(parser_build)
-    add_common_args(parser_build)
     parser_build.add_argument(
         'source_dir', nargs='?', default='.',
         help="Root path where SPECS/ and SOURCES are available. "
@@ -124,8 +124,6 @@ def buildparser():
     parser_run = subparsers_container.add_parser(
         'run',
         help='Execute a command inside a container')
-    add_container_args(parser_run)
-    add_common_args(parser_run)
     parser_run.add_argument(
         'command', nargs='*',
         help='Command with arguments to run inside the container, '
@@ -136,8 +134,6 @@ def buildparser():
     parser_shell = subparsers_container.add_parser(
         'shell',
         help='Drop a shell into the prepared container')
-    add_container_args(parser_shell)
-    add_common_args(parser_shell)
 
     return parser
 
