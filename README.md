@@ -109,7 +109,7 @@ git clone https://github.com/xcp-ng-rpms/xapi.git
 # ... Here add your patches ...
 
 # Build.
-xcp-ng-dev container build 8.2 xapi/
+xcp-ng-dev 8.2 container build xapi/
 ```
 
 **Important switches**
@@ -128,7 +128,7 @@ fully automated.
    `%autopatch` in the `%prep` block; add `BuildRequires: quilt`
 2. let quilt apply them in a 8.3 buildenv (`quilt` in 8.3 is only in EPEL) and get you a shell:
 ```sh
-xcp-ng-dev container build --rpmbuild-stage=p -n --enablerepo=epel 8.3
+xcp-ng-dev -n --enablerepo=epel 8.3 container build --rpmbuild-stage=p
 ```
 3. ask `quilt` to refresh all your patches (alternatively just the one you want)
 ```sh
@@ -178,5 +178,5 @@ example, if I clone some repos into a directory on my host, say `/work/code/`,
 then I can mount it inside the container as follows:
 
 ```sh
-xcp-ng-dev container shell -v /work/code:/mnt/repos 8.2
+xcp-ng-dev 8.2 container -v /work/code:/mnt/repos shell
 ```
