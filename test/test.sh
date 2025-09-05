@@ -4,7 +4,7 @@ set -eux
 
 TARGET_XCP_NG_VERSION="8.2"
 
-xcp-ng-dev-env-create "$TARGET_XCP_NG_VERSION"
+./container/build.sh "$TARGET_XCP_NG_VERSION"
 
 REPOS=xcp-emu-manager
 
