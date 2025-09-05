@@ -10,9 +10,10 @@ Simplifies the creation of a build environment for XCP-ng packages.
 
 import argparse
 import os
-import subprocess
 import shutil
+import subprocess
 import sys
+
 import argcomplete
 
 CONTAINER_PREFIX = "ghcr.io/xcp-ng/xcp-ng-build-env"
@@ -33,9 +34,7 @@ if RUNNER is None:
 def is_podman(runner):
     if os.path.basename(runner) == "podman":
         return True
-    if subprocess.getoutput(f"{runner} --version").startswith("podman "):
-        return True
-    return False
+    return subprocess.getoutput(f"{runner} --version").startswith("podman ")
 
 def add_common_args(parser):
     group = parser.add_argument_group("common arguments")
@@ -139,7 +138,7 @@ def buildparser():
         help='Drop a shell into the prepared container')
     add_common_args(parser_shell)
     add_container_args(parser_shell)
-    group_shell = parser_run.add_argument_group("shell arguments")
+    parser_run.add_argument_group("shell arguments")
 
     return parser
 
