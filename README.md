@@ -39,8 +39,10 @@ pipx install git+https://github.com/xcp-ng/xcp-ng-build-env
 After this, two new commands will be available: `xcp-ng-dev-env-create` and
 `xcp-ng-dev`.
 
-If you want to develop the package and try the changes as you develop the
-package, clone the repository and install the `xcp-ng-dev` package:
+If you want to develop the package and try the changes as you develop
+the package, or prefer updating the version from a git repo rather
+than from the python tools, clone the repository and install the
+`xcp-ng-dev` package:
 
 ```bash
 git clone github.com:xcp-ng/xcp-ng-build-env
@@ -53,6 +55,13 @@ like `pipx install --editable .`
 
 If you do not want this behaviour, use: `uv tool install --from . xcp-ng-dev`
 or `pipx install .`
+
+### updating
+
+Depending on how you installed:
+* with `uv`: just run the same command
+* with `pipx`: run the same command, with `--force`
+* editable with `git`: just update your git working tree
 
 ## Completion
 
