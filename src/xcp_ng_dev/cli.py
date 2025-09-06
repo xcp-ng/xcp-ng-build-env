@@ -49,6 +49,7 @@ def add_common_args(parser):
     parser.add_argument('-e', '--env', action='append',
                         help='Environment variables passed directly to '
                              f'{RUNNER} -e')
+    parser.add_argument('-U', '--disable-upstream-repos', action='store_true', help='disable the upstream repositories')
     parser.add_argument('-a', '--enablerepo',
                         help='additional repositories to enable before installing build dependencies. '
                              'Same syntax as yum\'s --enablerepo parameter. Available additional repositories: '
@@ -202,6 +203,8 @@ def container(args):
     if args.env:
         for env in args.env:
             docker_args += ["-e", env]
+    if args.disable_upstream_repos:
+        docker_args += ["-e", "DISABLE_UPSTREAM_REPOS=true"]
     if args.enablerepo:
         docker_args += ["-e", "ENABLEREPO=%s" % args.enablerepo]
     if args.disablerepo:
