@@ -23,8 +23,8 @@ jobs:
       - run: echo "VERSION=$(cat ./src/xcp_ng_dev/files/version.txt | tr -d '\n')" >> $GITHUB_ENV
       - uses: docker/build-push-action@v5 # Using v5 for latest features
         with:
-          context: ./src/xcp_ng_dev/
-          file: ./src/xcp_ng_dev/files/Dockerfile-8.x
+          context: .
+          file: ./Dockerfile-8.x
           push: ${{ github.ref == 'refs/heads/master' }}
           tags: ghcr.io/${{ github.repository }}:8.2-${{ env.VERSION }}
           cache-from: type=gha,scope=${{ github.ref_name }}-82 # Cache layers to speed up builds
@@ -50,8 +50,8 @@ jobs:
       - run: echo "VERSION=$(cat ./src/xcp_ng_dev/files/version.txt | tr -d '\n')" >> $GITHUB_ENV
       - uses: docker/build-push-action@v5 # Using v5 for latest features
         with:
-          context: ./src/xcp_ng_dev/
-          file: ./src/xcp_ng_dev/files/Dockerfile-8.x
+          context: .
+          file: ./Dockerfile-8.x
           push: ${{ github.ref == 'refs/heads/master' }}
           tags: ghcr.io/${{ github.repository }}:8.3-${{ env.VERSION }}
           cache-from: type=gha,scope=${{ github.ref_name }}-83 # Cache layers to speed up builds
@@ -76,8 +76,8 @@ jobs:
   #     - run: echo "VERSION=$(cat ./src/xcp_ng_dev/files/version.txt | tr -d '\n')" >> $GITHUB_ENV
   #     - uses: docker/build-push-action@v5 # Using v5 for latest features
   #       with:
-  #         context: ./src/xcp_ng_dev/
-  #         file: ./src/xcp_ng_dev/files/Dockerfile-9.x
+  #         context: .
+  #         file: ./Dockerfile-9.x
   #         platforms: |
   #           linux/amd64/v2
   #         push: ${{ github.ref == 'refs/heads/master' }}
