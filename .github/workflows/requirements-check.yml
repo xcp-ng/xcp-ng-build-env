@@ -1,4 +1,4 @@
-name: Test build env
+name: Check requirements file consistency
 
 on:
   push:
@@ -9,15 +9,14 @@ on:
 permissions: {}
 
 jobs:
-  test:
+  requirements-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
       - uses: ./.github/actions/uv-setup/
-      - name: Test
-        # use script to provide a tty (workaround of systematic "docker -t"?)
-        shell: 'script -q -e -c "bash {0}"'
-        run: |
-          ./test/test.sh
+        with:
+          dev: false
+      - run: ./requirements/update_requirements.py
+      - run: git diff --exit-code
