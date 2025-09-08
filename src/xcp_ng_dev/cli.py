@@ -38,8 +38,6 @@ def is_podman(runner):
     return False
 
 def add_common_args(parser):
-    parser.add_argument('branch',
-                        help='The version of XCP-ng to prepare for the build. For example, 8.3.')
     parser.add_argument('-n', '--no-exit', action='store_true',
                         help='After finishing the execution of the action, drop user into a shell')
     parser.add_argument('-d', '--dir', action='append',
@@ -59,6 +57,8 @@ def add_common_args(parser):
                         help='do not run "yum update" on container start, use it as it was at build time')
 
 def add_container_args(parser):
+    parser.add_argument('container_version',
+                        help='The version of XCP-ng container to for the build. For example, 8.3.')
     parser.add_argument('-v', '--volume', action='append',
                         help=f'Volume mounts passed directly to {RUNNER} -v')
     parser.add_argument('--no-rm', action='store_true',
@@ -142,8 +142,9 @@ def buildparser():
     return parser
 
 def container(args):
-    branch = args.branch
-    docker_arch = args.platform or ("linux/amd64/v2" if branch == "9.0" else "linux/amd64")
+    docker_arch = args.platform or ("linux/amd64/v2"
+                                    if args.container_version == "9.0"
+                                    else "linux/amd64")
 
     docker_args = [RUNNER, "run", "-i", "-t",
                    "-u", "builder",
@@ -215,7 +216,7 @@ def container(args):
         docker_args += ["--ulimit", "nofile=%s" % DEFAULT_ULIMIT_NOFILE]
 
     # exec "docker run"
-    docker_args += ["%s:%s" % (CONTAINER_PREFIX, branch),
+    docker_args += [f"{CONTAINER_PREFIX}:{args.container_version}",
                     "/usr/local/bin/init-container.sh"]
     print("Launching docker with args %s" % docker_args, file=sys.stderr)
     return subprocess.call(docker_args)
