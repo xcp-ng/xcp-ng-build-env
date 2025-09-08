@@ -38,44 +38,46 @@ def is_podman(runner):
     return False
 
 def add_common_args(parser):
-    parser.add_argument('-n', '--no-exit', action='store_true',
-                        help='After finishing the execution of the action, drop user into a shell')
-    parser.add_argument('-d', '--dir', action='append',
-                        help='Local dir to mount in the '
-                        'image. Will be mounted at /external/<dirname>')
-    parser.add_argument('-e', '--env', action='append',
-                        help='Environment variables passed directly to '
-                             f'{RUNNER} -e')
-    parser.add_argument('-a', '--enablerepo',
-                        help='additional repositories to enable before installing build dependencies. '
-                             'Same syntax as yum\'s --enablerepo parameter. Available additional repositories: '
-                             'check files/xcp-ng.repo.*.x.in.')
-    parser.add_argument('--disablerepo',
-                        help='disable repositories. Same syntax as yum\'s --disablerepo parameter. '
-                             'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
-    parser.add_argument('--no-update', action='store_true',
-                        help='do not run "yum update" on container start, use it as it was at build time')
+    group = parser.add_argument_group("common arguments")
+    group.add_argument('-n', '--no-exit', action='store_true',
+                       help='After finishing the execution of the action, drop user into a shell')
+    group.add_argument('-d', '--dir', action='append',
+                       help='Local dir to mount in the '
+                       'image. Will be mounted at /external/<dirname>')
+    group.add_argument('-e', '--env', action='append',
+                       help='Environment variables passed directly to '
+                       f'{RUNNER} -e')
+    group.add_argument('-a', '--enablerepo',
+                       help='additional repositories to enable before installing build dependencies. '
+                       'Same syntax as yum\'s --enablerepo parameter. Available additional repositories: '
+                       'check files/xcp-ng.repo.*.x.in.')
+    group.add_argument('--disablerepo',
+                       help='disable repositories. Same syntax as yum\'s --disablerepo parameter. '
+                       'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
+    group.add_argument('--no-update', action='store_true',
+                       help='do not run "yum update" on container start, use it as it was at build time')
 
 def add_container_args(parser):
-    parser.add_argument('container_version',
-                        help='The version of XCP-ng container to for the build. For example, 8.3.')
-    parser.add_argument('-v', '--volume', action='append',
-                        help=f'Volume mounts passed directly to {RUNNER} -v')
-    parser.add_argument('--no-rm', action='store_true',
-                        help='Do not destroy the container on exit')
-    parser.add_argument('--syslog', action='store_true',
-                        help='Enable syslog to host by mounting in /dev/log')
-    parser.add_argument('--name', help='Assign a name to the container')
-    parser.add_argument('--ulimit', action='append',
-                        help=f'Ulimit options passed directly to {RUNNER} run')
-    parser.add_argument('--platform', action='store',
-                        help="Override the default platform for the build container. "
-                        "Can notably be used to workaround podman bug #6185 fixed in v5.5.1.")
-    parser.add_argument('--fail-on-error', action='store_true',
-                        help='If container initialisation fails, exit rather than dropping the user '
-                             'into a shell')
-    parser.add_argument('--debug', action='store_true',
-                        help='Enable script tracing in container initialization (sh -x)')
+    group = parser.add_argument_group("container arguments")
+    group.add_argument('container_version',
+                       help='The version of XCP-ng container to for the build. For example, 8.3.')
+    group.add_argument('-v', '--volume', action='append',
+                       help=f'Volume mounts passed directly to {RUNNER} -v')
+    group.add_argument('--no-rm', action='store_true',
+                       help='Do not destroy the container on exit')
+    group.add_argument('--syslog', action='store_true',
+                       help='Enable syslog to host by mounting in /dev/log')
+    group.add_argument('--name', help='Assign a name to the container')
+    group.add_argument('--ulimit', action='append',
+                       help=f'Ulimit options passed directly to {RUNNER} run')
+    group.add_argument('--platform', action='store',
+                       help="Override the default platform for the build container. "
+                       "Can notably be used to workaround podman bug #6185 fixed in v5.5.1.")
+    group.add_argument('--fail-on-error', action='store_true',
+                       help='If container initialisation fails, exit rather than dropping the user '
+                       'into a shell')
+    group.add_argument('--debug', action='store_true',
+                       help='Enable script tracing in container initialization (sh -x)')
 
 
 def buildparser():
@@ -98,25 +100,26 @@ def buildparser():
              "of the directory passed as parameter, then build the RPM(s). "
              "Built RPMs and SRPMs will be in RPMS/ and SRPMS/ subdirectories. "
              "Any preexisting BUILD, BUILDROOT, RPMS or SRPMS directories will be removed first.")
-    add_container_args(parser_build)
     add_common_args(parser_build)
-    parser_build.add_argument(
+    add_container_args(parser_build)
+    group_build = parser_build.add_argument_group("build arguments")
+    group_build.add_argument(
         'source_dir', nargs='?', default='.',
         help="Root path where SPECS/ and SOURCES are available. "
              "The default is the working directory")
-    parser_build.add_argument(
+    group_build.add_argument(
         '--define',
         help="Definitions to be passed to rpmbuild. Example: --define "
              "'xcp_ng_section extras', for building the 'extras' "
              "version of a package which exists in both 'base' and 'extras' versions.")
-    parser_build.add_argument(
+    group_build.add_argument(
         '-o', '--output-dir',
         help="Directory where the RPMs, SRPMs and the build logs will appear. "
              "The directory is created if it doesn't exist")
-    parser_build.add_argument(
+    group_build.add_argument(
         '--rpmbuild-opts', action='append',
         help="Pass additional option(s) to rpmbuild")
-    parser_build.add_argument(
+    group_build.add_argument(
         '--rpmbuild-stage', action='store',
         help=f"Request given -bX stage rpmbuild, X in [{RPMBUILD_STAGES}]")
 
@@ -124,9 +127,10 @@ def buildparser():
     parser_run = subparsers_container.add_parser(
         'run',
         help='Execute a command inside a container')
-    add_container_args(parser_run)
     add_common_args(parser_run)
-    parser_run.add_argument(
+    add_container_args(parser_run)
+    group_run = parser_run.add_argument_group("run arguments")
+    group_run.add_argument(
         'command', nargs='*',
         help='Command with arguments to run inside the container, '
              'if the command has arguments that start with --, '
@@ -136,8 +140,9 @@ def buildparser():
     parser_shell = subparsers_container.add_parser(
         'shell',
         help='Drop a shell into the prepared container')
-    add_container_args(parser_shell)
     add_common_args(parser_shell)
+    add_container_args(parser_shell)
+    group_shell = parser_run.add_argument_group("shell arguments")
 
     return parser
 
