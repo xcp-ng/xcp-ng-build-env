@@ -13,7 +13,6 @@ import os
 import subprocess
 import shutil
 import sys
-import uuid
 import argcomplete
 
 CONTAINER_PREFIX = "ghcr.io/xcp-ng/xcp-ng-build-env"
@@ -134,7 +133,6 @@ def buildparser():
              'separate the arguments for this tool and the command with " -- ".')
 
     # shell -- like run bash
-    parser_shell = argparse.ArgumentParser()
     parser_shell = subparsers_container.add_parser(
         'shell',
         help='Drop a shell into the prepared container')
@@ -144,7 +142,6 @@ def buildparser():
     return parser
 
 def container(args):
-    build = args.action == 'build'
     branch = args.branch
     docker_arch = args.platform or ("linux/amd64/v2" if branch == "9.0" else "linux/amd64")
 
@@ -159,23 +156,22 @@ def container(args):
 
     if hasattr(args, 'command') and args.command != []:
         docker_args += ["-e", "COMMAND=%s" % ' '.join(args.command)]
-    if build:
+    if args.action == 'build':
         build_dir = os.path.abspath(args.source_dir)
         docker_args += ["-v", f"{build_dir}:/home/builder/rpmbuild"]
         docker_args += ["-e", "BUILD_LOCAL=1"]
-        print(f"Building directory {build_dir}")
+        print(f"Building directory {build_dir}", file=sys.stderr)
     if hasattr(args, 'define') and args.define:
         docker_args += ["-e", "RPMBUILD_DEFINE=%s" % args.define]
     if hasattr(args, 'rpmbuild_opts') and args.rpmbuild_opts:
         docker_args += ["-e", "RPMBUILD_OPTS=%s" % ' '.join(args.rpmbuild_opts)]
     if hasattr(args, 'rpmbuild_stage') and args.rpmbuild_stage:
         if args.rpmbuild_stage not in RPMBUILD_STAGES:
-            parser.error(f"--rpmbuild-stage={args.rpmbuild_stage} not in '{RPMBUILD_STAGES}'")
+            print(f"--rpmbuild-stage={args.rpmbuild_stage} not in '{RPMBUILD_STAGES}'", file=sys.stderr)
+            sys.exit(1)
         docker_args += ["-e", f"RPMBUILD_STAGE={args.rpmbuild_stage}"]
     if hasattr(args, 'output_dir') and args.output_dir:
-        if not os.path.isdir(args.output_dir):
-            print(f"{args.output_dir} is not a valid output directory.")
-            sys.exit(1)
+        os.makedirs(args.output_dir, exist_ok=True)
         docker_args += ["-v", "%s:/home/builder/output" %
                         os.path.abspath(args.output_dir)]
     if args.no_exit:
@@ -191,7 +187,7 @@ def container(args):
     if args.dir:
         for localdir in args.dir:
             if not os.path.isdir(localdir):
-                print("Local directory argument is not a directory!")
+                print("Local directory argument is not a directory!", file=sys.stderr)
                 sys.exit(1)
             ext_path = os.path.abspath(localdir)
             int_path = os.path.basename(ext_path)
