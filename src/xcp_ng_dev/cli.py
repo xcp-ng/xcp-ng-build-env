@@ -38,44 +38,46 @@ def is_podman(runner):
     return False
 
 def add_common_args(parser):
-    parser.add_argument('branch',
-                        help='The version of XCP-ng to prepare for the build. For example, 8.3.')
-    parser.add_argument('-n', '--no-exit', action='store_true',
-                        help='After finishing the execution of the action, drop user into a shell')
-    parser.add_argument('-d', '--dir', action='append',
-                        help='Local dir to mount in the '
-                        'image. Will be mounted at /external/<dirname>')
-    parser.add_argument('-e', '--env', action='append',
-                        help='Environment variables passed directly to '
-                             f'{RUNNER} -e')
-    parser.add_argument('-a', '--enablerepo',
-                        help='additional repositories to enable before installing build dependencies. '
-                             'Same syntax as yum\'s --enablerepo parameter. Available additional repositories: '
-                             'check files/xcp-ng.repo.*.x.in.')
-    parser.add_argument('--disablerepo',
-                        help='disable repositories. Same syntax as yum\'s --disablerepo parameter. '
-                             'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
-    parser.add_argument('--no-update', action='store_true',
-                        help='do not run "yum update" on container start, use it as it was at build time')
+    group = parser.add_argument_group("common arguments")
+    group.add_argument('-n', '--no-exit', action='store_true',
+                       help='After finishing the execution of the action, drop user into a shell')
+    group.add_argument('-d', '--dir', action='append',
+                       help='Local dir to mount in the '
+                       'image. Will be mounted at /external/<dirname>')
+    group.add_argument('-e', '--env', action='append',
+                       help='Environment variables passed directly to '
+                       f'{RUNNER} -e')
+    group.add_argument('-a', '--enablerepo',
+                       help='additional repositories to enable before installing build dependencies. '
+                       'Same syntax as yum\'s --enablerepo parameter. Available additional repositories: '
+                       'check files/xcp-ng.repo.*.x.in.')
+    group.add_argument('--disablerepo',
+                       help='disable repositories. Same syntax as yum\'s --disablerepo parameter. '
+                       'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
+    group.add_argument('--no-update', action='store_true',
+                       help='do not run "yum update" on container start, use it as it was at build time')
 
 def add_container_args(parser):
-    parser.add_argument('-v', '--volume', action='append',
-                        help=f'Volume mounts passed directly to {RUNNER} -v')
-    parser.add_argument('--rm', action='store_true',
-                        help='Destroy the container on exit')
-    parser.add_argument('--syslog', action='store_true',
-                        help='Enable syslog to host by mounting in /dev/log')
-    parser.add_argument('--name', help='Assign a name to the container')
-    parser.add_argument('--ulimit', action='append',
-                        help=f'Ulimit options passed directly to {RUNNER} run')
-    parser.add_argument('--platform', action='store',
-                        help="Override the default platform for the build container. "
-                        "Can notably be used to workaround podman bug #6185 fixed in v5.5.1.")
-    parser.add_argument('--fail-on-error', action='store_true',
-                        help='If container initialisation fails, exit rather than dropping the user '
-                             'into a shell')
-    parser.add_argument('--debug', action='store_true',
-                        help='Enable script tracing in container initialization (sh -x)')
+    group = parser.add_argument_group("container arguments")
+    group.add_argument('container_version',
+                       help='The version of XCP-ng container to for the build. For example, 8.3.')
+    group.add_argument('-v', '--volume', action='append',
+                       help=f'Volume mounts passed directly to {RUNNER} -v')
+    group.add_argument('--no-rm', action='store_true',
+                       help='Do not destroy the container on exit')
+    group.add_argument('--syslog', action='store_true',
+                       help='Enable syslog to host by mounting in /dev/log')
+    group.add_argument('--name', help='Assign a name to the container')
+    group.add_argument('--ulimit', action='append',
+                       help=f'Ulimit options passed directly to {RUNNER} run')
+    group.add_argument('--platform', action='store',
+                       help="Override the default platform for the build container. "
+                       "Can notably be used to workaround podman bug #6185 fixed in v5.5.1.")
+    group.add_argument('--fail-on-error', action='store_true',
+                       help='If container initialisation fails, exit rather than dropping the user '
+                       'into a shell')
+    group.add_argument('--debug', action='store_true',
+                       help='Enable script tracing in container initialization (sh -x)')
 
 
 def buildparser():
@@ -98,35 +100,37 @@ def buildparser():
              "of the directory passed as parameter, then build the RPM(s). "
              "Built RPMs and SRPMs will be in RPMS/ and SRPMS/ subdirectories. "
              "Any preexisting BUILD, BUILDROOT, RPMS or SRPMS directories will be removed first.")
-    parser_build.add_argument(
+    add_common_args(parser_build)
+    add_container_args(parser_build)
+    group_build = parser_build.add_argument_group("build arguments")
+    group_build.add_argument(
         'source_dir', nargs='?', default='.',
         help="Root path where SPECS/ and SOURCES are available. "
              "The default is the working directory")
-    parser_build.add_argument(
+    group_build.add_argument(
         '--define',
         help="Definitions to be passed to rpmbuild. Example: --define "
              "'xcp_ng_section extras', for building the 'extras' "
              "version of a package which exists in both 'base' and 'extras' versions.")
-    parser_build.add_argument(
+    group_build.add_argument(
         '-o', '--output-dir',
         help="Directory where the RPMs, SRPMs and the build logs will appear. "
              "The directory is created if it doesn't exist")
-    parser_build.add_argument(
+    group_build.add_argument(
         '--rpmbuild-opts', action='append',
         help="Pass additional option(s) to rpmbuild")
-    parser_build.add_argument(
+    group_build.add_argument(
         '--rpmbuild-stage', action='store',
         help=f"Request given -bX stage rpmbuild, X in [{RPMBUILD_STAGES}]")
-    add_container_args(parser_build)
-    add_common_args(parser_build)
 
     # run -- execute commands inside a container
     parser_run = subparsers_container.add_parser(
         'run',
         help='Execute a command inside a container')
-    add_container_args(parser_run)
     add_common_args(parser_run)
-    parser_run.add_argument(
+    add_container_args(parser_run)
+    group_run = parser_run.add_argument_group("run arguments")
+    group_run.add_argument(
         'command', nargs='*',
         help='Command with arguments to run inside the container, '
              'if the command has arguments that start with --, '
@@ -136,54 +140,22 @@ def buildparser():
     parser_shell = subparsers_container.add_parser(
         'shell',
         help='Drop a shell into the prepared container')
-    add_container_args(parser_shell)
     add_common_args(parser_shell)
+    add_container_args(parser_shell)
+    group_shell = parser_run.add_argument_group("shell arguments")
 
     return parser
 
 def container(args):
-    branch = args.branch
-    docker_arch = args.platform or ("linux/amd64/v2" if branch == "9.0" else "linux/amd64")
-
     docker_args = [RUNNER, "run", "-i", "-t",
                    "-u", "builder",
-                   "--platform", docker_arch,
                    ]
     if is_podman(RUNNER):
         docker_args += ["--userns=keep-id", "--security-opt", "label=disable"]
-    if args.rm:
-        docker_args += ["--rm=true"]
 
-    if hasattr(args, 'command') and args.command != []:
-        docker_args += ["-e", "COMMAND=%s" % ' '.join(args.command)]
-    if args.action == 'build':
-        build_dir = os.path.abspath(args.source_dir)
-        docker_args += ["-v", f"{build_dir}:/home/builder/rpmbuild"]
-        docker_args += ["-e", "BUILD_LOCAL=1"]
-        print(f"Building directory {build_dir}", file=sys.stderr)
-    if hasattr(args, 'define') and args.define:
-        docker_args += ["-e", "RPMBUILD_DEFINE=%s" % args.define]
-    if hasattr(args, 'rpmbuild_opts') and args.rpmbuild_opts:
-        docker_args += ["-e", "RPMBUILD_OPTS=%s" % ' '.join(args.rpmbuild_opts)]
-    if hasattr(args, 'rpmbuild_stage') and args.rpmbuild_stage:
-        if args.rpmbuild_stage not in RPMBUILD_STAGES:
-            print(f"--rpmbuild-stage={args.rpmbuild_stage} not in '{RPMBUILD_STAGES}'", file=sys.stderr)
-            sys.exit(1)
-        docker_args += ["-e", f"RPMBUILD_STAGE={args.rpmbuild_stage}"]
-    if hasattr(args, 'output_dir') and args.output_dir:
-        os.makedirs(args.output_dir, exist_ok=True)
-        docker_args += ["-v", "%s:/home/builder/output" %
-                        os.path.abspath(args.output_dir)]
+    # common args
     if args.no_exit:
         docker_args += ["-e", "NO_EXIT=1"]
-    if args.fail_on_error:
-        docker_args += ["-e", "FAIL_ON_ERROR=1"]
-    if args.debug:
-        docker_args += ["-e", "SCRIPT_DEBUG=1"]
-    if args.syslog:
-        docker_args += ["-v", "/dev/log:/dev/log"]
-    if args.name:
-        docker_args += ["--name", args.name]
     if args.dir:
         for localdir in args.dir:
             if not os.path.isdir(localdir):
@@ -192,9 +164,6 @@ def container(args):
             ext_path = os.path.abspath(localdir)
             int_path = os.path.basename(ext_path)
             docker_args += ["-v", "%s:/external/%s" % (ext_path, int_path)]
-    if args.volume:
-        for volume in args.volume:
-            docker_args += ["-v", volume]
     if args.env:
         for env in args.env:
             docker_args += ["-e", env]
@@ -205,6 +174,17 @@ def container(args):
     if args.no_update:
         docker_args += ["-e", "NOUPDATE=1"]
 
+    # container args
+    if args.volume:
+        for volume in args.volume:
+            docker_args += ["-v", volume]
+    if not args.no_rm:
+        docker_args += ["--rm=true"]
+    if args.syslog:
+        docker_args += ["-v", "/dev/log:/dev/log"]
+    if args.name:
+        docker_args += ["--name", args.name]
+
     ulimit_nofile = False
     if args.ulimit:
         for ulimit in args.ulimit:
@@ -214,8 +194,47 @@ def container(args):
     if not ulimit_nofile:
         docker_args += ["--ulimit", "nofile=%s" % DEFAULT_ULIMIT_NOFILE]
 
+    docker_arch = args.platform or ("linux/amd64/v2"
+                                    if args.container_version == "9.0"
+                                    else "linux/amd64")
+    docker_args += ["--platform", docker_arch]
+
+    if args.fail_on_error:
+        docker_args += ["-e", "FAIL_ON_ERROR=1"]
+    if args.debug:
+        docker_args += ["-e", "SCRIPT_DEBUG=1"]
+
+    # action-specific
+    match args.action:
+        case 'build':
+            build_dir = os.path.abspath(args.source_dir)
+            if args.define:
+                docker_args += ["-e", "RPMBUILD_DEFINE=%s" % args.define]
+            if args.output_dir:
+                os.makedirs(args.output_dir, exist_ok=True)
+                docker_args += ["-v", "%s:/home/builder/output" %
+                                os.path.abspath(args.output_dir)]
+            if args.rpmbuild_opts:
+                docker_args += ["-e", "RPMBUILD_OPTS=%s" % ' '.join(args.rpmbuild_opts)]
+            if args.rpmbuild_stage:
+                if args.rpmbuild_stage not in RPMBUILD_STAGES:
+                    print(f"--rpmbuild-stage={args.rpmbuild_stage} not in '{RPMBUILD_STAGES}'", file=sys.stderr)
+                    sys.exit(1)
+                docker_args += ["-e", f"RPMBUILD_STAGE={args.rpmbuild_stage}"]
+
+            docker_args += ["-v", f"{build_dir}:/home/builder/rpmbuild"]
+            docker_args += ["-e", "BUILD_LOCAL=1"]
+            print(f"Building directory {build_dir}", file=sys.stderr)
+
+        case 'run':
+            docker_args += ["-e", "COMMAND=%s" % ' '.join(args.command)]
+
+        case 'shell':
+            # no argument
+            pass
+
     # exec "docker run"
-    docker_args += ["%s:%s" % (CONTAINER_PREFIX, branch),
+    docker_args += [f"{CONTAINER_PREFIX}:{args.container_version}",
                     "/usr/local/bin/init-container.sh"]
     print("Launching docker with args %s" % docker_args, file=sys.stderr)
     return subprocess.call(docker_args)

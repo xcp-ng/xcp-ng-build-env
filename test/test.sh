@@ -15,8 +15,7 @@ for REPO in ${REPOS}; do
     trap "rm -rf '$REPO_PATH'" EXIT
     git clone --branch "$TARGET_XCP_NG_VERSION" https://github.com/xcp-ng-rpms/"$REPO" "$REPO_PATH"
 
-    xcp-ng-dev container build "$REPO_PATH" "$TARGET_XCP_NG_VERSION" \
+    xcp-ng-dev container build "$TARGET_XCP_NG_VERSION" "$REPO_PATH" \
         --name "$CONTAINER_NAME" \
-        --fail-on-error \
-        --rm
+        --fail-on-error
 done

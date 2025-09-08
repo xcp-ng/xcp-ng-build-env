@@ -39,8 +39,10 @@ pipx install git+https://github.com/xcp-ng/xcp-ng-build-env
 After this, two new commands will be available: `xcp-ng-dev-env-create` and
 `xcp-ng-dev`.
 
-If you want to develop the package and try the changes as you develop the
-package, clone the repository and install the `xcp-ng-dev` package:
+If you want to develop the package and try the changes as you develop
+the package, or prefer updating the version from a git repo rather
+than from the python tools, clone the repository and install the
+`xcp-ng-dev` package:
 
 ```bash
 git clone github.com:xcp-ng/xcp-ng-build-env
@@ -53,6 +55,13 @@ like `pipx install --editable .`
 
 If you do not want this behaviour, use: `uv tool install --from . xcp-ng-dev`
 or `pipx install .`
+
+### updating
+
+Depending on how you installed:
+* with `uv`: just run the same command
+* with `pipx`: run the same command, with `--force`
+* editable with `git`: just update your git working tree
 
 ## Completion
 
@@ -100,13 +109,13 @@ git clone https://github.com/xcp-ng-rpms/xapi.git
 # ... Here add your patches ...
 
 # Build.
-xcp-ng-dev container build --rm xapi/ 8.2
+xcp-ng-dev container build 8.2 xapi/
 ```
 
 **Important switches**
 
 * `--no-exit` drops you to a shell after the build, instead of closing the container. Useful if the build fails and you need to debug.
-* `--rm` destroys the container on exit. Helps preventing containers from using too much space on disk. You can still reclaim space afterwards by running `docker container prune` and `docker image prune`
+* `--no-rm` keeps the container on exit, if you want to keep it for whatever reason. If you do, you can still reclaim space afterwards by running `docker container prune` and `docker image prune`.
 * `-v` / `--volume` (see *Mounting repos from outside the container* below)
 
 **Refreshing fuzzy patches**
@@ -119,7 +128,7 @@ fully automated.
    `%autopatch` in the `%prep` block; add `BuildRequires: quilt`
 2. let quilt apply them in a 8.3 buildenv (`quilt` in 8.3 is only in EPEL) and get you a shell:
 ```sh
-xcp-ng-dev container build --rm --rpmbuild-stage=p -n --enablerepo=epel 8.3
+xcp-ng-dev container build --rpmbuild-stage=p -n --enablerepo=epel 8.3
 ```
 3. ask `quilt` to refresh all your patches (alternatively just the one you want)
 ```sh
