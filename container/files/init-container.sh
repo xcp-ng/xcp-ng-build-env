@@ -9,6 +9,14 @@ if [ -n "$NO_EXIT" ]; then
     trap "/bin/bash --login" EXIT
 fi
 
+os_name()
+{
+    (
+        source /etc/os-release
+        echo "$NAME"
+    )
+}
+
 os_release()
 {
     (
@@ -17,13 +25,14 @@ os_release()
     )
 }
 
+OS_NAME=$(os_name)
 OS_RELEASE=$(os_release)
 
 # get list of user repos
-case "$OS_RELEASE" in
-    8.2.*) XCPREL=8/8.2 ;;
-    8.3.*) XCPREL=8/8.3 ;;
-    *) echo >&2 "WARNING: unknown release, not fetching user repo definitions" ;;
+case "$OS_NAME,$OS_RELEASE" in
+    XCP-ng,8.2.*) XCPREL=8/8.2 ;;
+    XCP-ng,8.3.*) XCPREL=8/8.3 ;;
+    *) echo >&2 "WARNING: unknown os-release pair '$OS_NAME,$OS_RELEASE', not fetching user repo definitions" ;;
 esac
 
 if [ -n "$XCPREL" ]; then
@@ -32,18 +41,18 @@ if [ -n "$XCPREL" ]; then
 fi
 
 # yum or dnf?
-case "$OS_RELEASE" in
-    8.2.*|8.3.*)
+case "$OS_NAME,$OS_RELEASE" in
+    XCP-ng,8.2.*|XCP-ng,8.3.*)
         DNF=yum
         CFGMGR=yum-config-manager
         BDEP=yum-builddep
         ;;
-    8.99.*|9.*|10.*) # FIXME 10.* actually to bootstrap Alma10
+    XCP-ng,8.99.*|XCP-ng,9.*|AlmaLinux,10.*)
         DNF=dnf
         CFGMGR="dnf config-manager"
         BDEP="dnf builddep"
         ;;
-    *) echo >&2 "ERROR: unknown release, cannot know package manager"; exit 1 ;;
+    *) echo >&2 "ERROR: unknown os-release pair '$OS_NAME,$OS_RELEASE', cannot know package manager"; exit 1 ;;
 esac
 
 # enable upstream repositories if needed
@@ -95,10 +104,10 @@ if [ -n "$BUILD_LOCAL" ]; then
         fi
         echo "Found specfiles $specs"
 
-        case "$OS_RELEASE" in
-            8.2.*|8.3.*) ;; # sources always available via git-lfs
-            8.99.*|9.*) if [ -r sources ]; then alma_get_sources -i sources; fi ;;
-            *) echo >&2 "ERROR: unknown release, cannot know package manager"; exit 1 ;;
+        case "$OS_NAME,$OS_RELEASE" in
+            XCP-ng,8.2.*|XCP-ng,8.3.*) ;; # sources always available via git-lfs
+            XCP-ng,8.99.*|XCP-ng,9.*|AlmaLinux,10.*) if [ -r sources ]; then alma_get_sources -i sources; fi ;;
+            *) echo >&2 "ERROR: unknown os-release pair '$OS_NAME,$OS_RELEASE', don't know how to find sources"; exit 1 ;;
         esac
 
         DEFINEFLAGS=()
