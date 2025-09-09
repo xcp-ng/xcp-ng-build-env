@@ -112,6 +112,9 @@ def add_common_args(parser):
     group.add_argument('-U', '--enable-upstream-repos', action='store_true', help='enable the upstream repositories')
     group.add_argument('--no-update', action='store_true',
                        help='do not run "yum update" on container start, use it as it was at build time')
+    group.add_argument('--variant', choices=['bootstrap', 'isarpm'],
+                       help='use a variant build-env: "bootstrap" is able to build xcp-ng-release.'
+                       '"isarpm" (internal) is suitable for the ISARPM build system')
     group.add_argument('--no-network', action='store_true',
                        help='disable all networking support in the build environment')
 
@@ -377,8 +380,12 @@ def container(args):
     # Set the timezone of the container so it corresponds to the local machine
     docker_args += ["-e", f"TZ={get_timezone()}"]
 
+    tag = args.container_version
+    if args.variant:
+        tag += f"-{args.variant}"
+
     # exec "docker run"
-    docker_args += [f"{CONTAINER_PREFIX}:{args.container_version}",
+    docker_args += [f"{CONTAINER_PREFIX}:{tag}",
                     "/usr/local/bin/init-container.sh"]
     print("Launching docker with args %s" % docker_args, file=sys.stderr)
     return subprocess.call(docker_args)
