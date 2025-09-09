@@ -7,6 +7,10 @@ if [ -n "$SCRIPT_DEBUG" ]; then
     set -x
 fi
 
+if [ -n "$NO_EXIT" ]; then
+    trap "/bin/bash --login" EXIT
+fi
+
 os_release()
 {
     (
@@ -114,10 +118,5 @@ if [ -n "$BUILD_LOCAL" ]; then
 elif [ -n "$COMMAND" ]; then
     $COMMAND
 else
-    /bin/bash --login
-    exit 0
-fi
-
-if [ -n "$NO_EXIT" ]; then
-    /bin/bash --login
+    /bin/bash --login || true
 fi
