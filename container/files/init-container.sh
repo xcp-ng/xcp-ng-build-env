@@ -97,8 +97,8 @@ if [ -n "$BUILD_LOCAL" ]; then
 
         case "$OS_NAME,$OS_RELEASE" in
             XCP-ng,8.2.*|XCP-ng,8.3.*) ;; # sources always available via git-lfs
-            XCP-ng,8.99.*|XCP-ng,9.*) if [ -r sources ]; then alma_get_sources -i sources; fi ;;
-            *) echo >&2 "ERROR: unknown release, cannot know package manager"; exit 1 ;;
+            XCP-ng,8.99.*|XCP-ng,9.*|AlmaLinux,10.*) if [ -r sources ]; then alma_get_sources -i sources; fi ;;
+            *) echo >&2 "ERROR: unknown release, don't know how to find sources"; exit 1 ;;
         esac
 
         sudo $BDEP "${SPECFLAGS[@]}" -y $specs
