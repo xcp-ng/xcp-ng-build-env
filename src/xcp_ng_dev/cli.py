@@ -73,9 +73,6 @@ def add_container_args(parser):
     group.add_argument('--platform', action='store',
                        help="Override the default platform for the build container. "
                        "Can notably be used to workaround podman bug #6185 fixed in v5.5.1.")
-    group.add_argument('--fail-on-error', action='store_true',
-                       help='If container initialisation fails, exit rather than dropping the user '
-                       'into a shell')
     group.add_argument('--debug', action='store_true',
                        help='Enable script tracing in container initialization (sh -x)')
 
@@ -199,8 +196,6 @@ def container(args):
                                     else "linux/amd64")
     docker_args += ["--platform", docker_arch]
 
-    if args.fail_on_error:
-        docker_args += ["-e", "FAIL_ON_ERROR=1"]
     if args.debug:
         docker_args += ["-e", "SCRIPT_DEBUG=1"]
 
