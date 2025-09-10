@@ -29,7 +29,7 @@ xcp-ng-dev-env-create = "xcp_ng_dev.cli:build"
 Homepage = "https://github.com/xcp-ng/xcp-ng-build-env/"
 
 [build-system]
-requires = ["setuptools >= 77.0.3", "setuptools-scm>=8", "wheel"]
+requires = ["setuptools >= 77.0.3", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
