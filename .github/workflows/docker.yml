@@ -20,12 +20,13 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }} # Uses the GitHub user/org name that triggered the workflow
           password: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub
+      - run: echo "VERSION=$(cat ./src/xcp_ng_dev/files/protocol-version.txt | tr -d '\n')" >> $GITHUB_ENV
       - uses: docker/build-push-action@v5 # Using v5 for latest features
         with:
-          context: ./src/xcp_ng_dev/
-          file: ./src/xcp_ng_dev/files/Dockerfile-8.x
+          context: ./container
+          file: ./container/Dockerfile-8.x
           push: ${{ github.ref == 'refs/heads/master' }}
-          tags: ghcr.io/${{ github.repository }}:8.2
+          tags: ghcr.io/${{ github.repository }}:8.2-${{ env.VERSION }}
           cache-from: type=gha,scope=${{ github.ref_name }}-82 # Cache layers to speed up builds
           cache-to: type=gha,mode=max,scope=${{ github.ref_name }}-82 # Store layers in cache for future builds
           build-args: |
@@ -46,12 +47,13 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }} # Uses the GitHub user/org name that triggered the workflow
           password: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub
+      - run: echo "VERSION=$(cat ./src/xcp_ng_dev/files/protocol-version.txt | tr -d '\n')" >> $GITHUB_ENV
       - uses: docker/build-push-action@v5 # Using v5 for latest features
         with:
-          context: ./src/xcp_ng_dev/
-          file: ./src/xcp_ng_dev/files/Dockerfile-8.x
+          context: ./container
+          file: ./container/Dockerfile-8.x
           push: ${{ github.ref == 'refs/heads/master' }}
-          tags: ghcr.io/${{ github.repository }}:8.3
+          tags: ghcr.io/${{ github.repository }}:8.3-${{ env.VERSION }}
           cache-from: type=gha,scope=${{ github.ref_name }}-83 # Cache layers to speed up builds
           cache-to: type=gha,mode=max,scope=${{ github.ref_name }}-83 # Store layers in cache for future builds
           platforms: |
@@ -71,13 +73,14 @@ jobs:
   #         registry: ghcr.io
   #         username: ${{ github.actor }} # Uses the GitHub user/org name that triggered the workflow
   #         password: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub
+  #     - run: echo "VERSION=$(cat ./src/xcp_ng_dev/files/protocol-version.txt | tr -d '\n')" >> $GITHUB_ENV
   #     - uses: docker/build-push-action@v5 # Using v5 for latest features
   #       with:
-  #         context: ./src/xcp_ng_dev/
-  #         file: ./src/xcp_ng_dev/files/Dockerfile-9.x
+  #         context: ./container
+  #         file: ./container/Dockerfile-9.x
   #         platforms: |
   #           linux/amd64/v2
   #         push: ${{ github.ref == 'refs/heads/master' }}
-  #         tags: ghcr.io/${{ github.repository }}:9.0
+  #         tags: ghcr.io/${{ github.repository }}:9.0-${{ env.VERSION }}
   #         cache-from: type=gha,scope=${{ github.ref_name }}-90 # Cache layers to speed up builds
   #         cache-to: type=gha,mode=max,scope=${{ github.ref_name }}-90 # Store layers in cache for future builds

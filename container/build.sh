@@ -71,12 +71,12 @@ ALMA_VERSION=
 CENTOS_VERSION=
 case "$1" in
     9.*)
-        DOCKERFILE=files/Dockerfile-9.x
+        DOCKERFILE=Dockerfile-9.x
         ALMA_VERSION=10.0
         : ${PLATFORM:=linux/amd64/v2}
         ;;
     8.*)
-        DOCKERFILE=files/Dockerfile-8.x
+        DOCKERFILE=Dockerfile-8.x
         : ${PLATFORM:=linux/amd64}
         ;;
     *)
@@ -85,9 +85,12 @@ case "$1" in
         ;;
 esac
 
+version_data=$(cat ../src/xcp_ng_dev/files/protocol-version.txt)
+version=$(echo "$version_data" | tr -d '\n')
+
 "$RUNNER" build \
     --platform "$PLATFORM" \
-    -t ghcr.io/xcp-ng/xcp-ng-build-env:${1} \
+    -t ghcr.io/xcp-ng/xcp-ng-build-env:${1}-${version} \
     --build-arg XCP_NG_BRANCH=${1} \
     --ulimit nofile=1024 \
     -f $DOCKERFILE .
