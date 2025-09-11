@@ -20,11 +20,13 @@ usage() {
 Usage: $SELF_NAME [--platform PF] <version>
 ... where <version> is a 'x.y' version such as 8.0.
 
---platform override the default platform for the build container.
+--platform   override the default platform for the build container.
+--bootstrap  generate a bootstrap image, needed to build xcp-ng-release.
 EOF
 }
 
 PLATFORM=
+BOOTSTRAP=0
 while [ $# -ge 1 ]; do
     case "$1" in
         --help|-h)
@@ -35,6 +37,9 @@ while [ $# -ge 1 ]; do
             [ $# -ge 2 ] || die_usage "$1 needs an argument"
             PLATFORM="$2"
             shift
+            ;;
+        --bootstrap)
+            BOOTSTRAP=1
             ;;
         -*)
             die_usage "unknown flag '$1'"
@@ -47,6 +52,12 @@ while [ $# -ge 1 ]; do
 done
 
 [ -n "$1" ] || die_usage "version parameter missing"
+
+case "$1" in
+    8.*)
+        [ $BOOTSTRAP = 0 ] || die "--bootstrap is only supported for XCP-ng 9.0 and newer"
+        ;;
+esac
 
 RUNNER=""
 if [ -n "$XCPNG_OCI_RUNNER" ]; then
@@ -85,9 +96,16 @@ case "$1" in
         ;;
 esac
 
+if [ $BOOTSTRAP = 0 ]; then
+    TAG=${1}
+else
+    TAG=${1}-bootstrap
+    CUSTOM_ARGS+=( "--build-arg" "BOOTSTRAP=1" )
+fi
+
 "$RUNNER" build \
     --platform "$PLATFORM" \
-    -t ghcr.io/xcp-ng/xcp-ng-build-env:${1} \
+    -t ghcr.io/xcp-ng/xcp-ng-build-env:${TAG} \
     --build-arg XCP_NG_BRANCH=${1} \
     --ulimit nofile=1024 \
     -f $DOCKERFILE .

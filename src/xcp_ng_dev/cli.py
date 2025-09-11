@@ -55,6 +55,8 @@ def add_common_args(parser):
                        'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
     group.add_argument('--no-update', action='store_true',
                        help='do not run "yum update" on container start, use it as it was at build time')
+    group.add_argument('--bootstrap', action='store_true',
+                       help='use a bootstrap build-env, able to build xc-ng-release')
 
 def add_container_args(parser):
     group = parser.add_argument_group("container arguments")
@@ -233,8 +235,12 @@ def container(args):
             # no argument
             pass
 
+    tag = args.container_version
+    if args.bootstrap:
+        tag += "-bootstrap"
+
     # exec "docker run"
-    docker_args += [f"{CONTAINER_PREFIX}:{args.container_version}",
+    docker_args += [f"{CONTAINER_PREFIX}:{tag}",
                     "/usr/local/bin/init-container.sh"]
     print("Launching docker with args %s" % docker_args, file=sys.stderr)
     return subprocess.call(docker_args)
