@@ -71,12 +71,12 @@ ALMA_VERSION=
 CENTOS_VERSION=
 case "$1" in
     9.*)
-        DOCKERFILE=files/Dockerfile-9.x
+        DOCKERFILE=Dockerfile-9.x
         ALMA_VERSION=10.0
         : ${PLATFORM:=linux/amd64/v2}
         ;;
     8.*)
-        DOCKERFILE=files/Dockerfile-8.x
+        DOCKERFILE=Dockerfile-8.x
         : ${PLATFORM:=linux/amd64}
         ;;
     *)

@@ -22,8 +22,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub
       - uses: docker/build-push-action@v5 # Using v5 for latest features
         with:
-          context: ./src/xcp_ng_dev/
-          file: ./src/xcp_ng_dev/files/Dockerfile-8.x
+          context: ./container
+          file: ./container/Dockerfile-8.x
           push: ${{ github.ref == 'refs/heads/master' }}
           tags: ghcr.io/${{ github.repository }}:8.2
           cache-from: type=gha,scope=${{ github.ref_name }}-82 # Cache layers to speed up builds
@@ -48,8 +48,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub
       - uses: docker/build-push-action@v5 # Using v5 for latest features
         with:
-          context: ./src/xcp_ng_dev/
-          file: ./src/xcp_ng_dev/files/Dockerfile-8.x
+          context: ./container
+          file: ./container/Dockerfile-8.x
           push: ${{ github.ref == 'refs/heads/master' }}
           tags: ghcr.io/${{ github.repository }}:8.3
           cache-from: type=gha,scope=${{ github.ref_name }}-83 # Cache layers to speed up builds
@@ -73,8 +73,8 @@ jobs:
   #         password: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub
   #     - uses: docker/build-push-action@v5 # Using v5 for latest features
   #       with:
-  #         context: ./src/xcp_ng_dev/
-  #         file: ./src/xcp_ng_dev/files/Dockerfile-9.x
+  #         context: ./container
+  #         file: ./container/Dockerfile-9.x
   #         platforms: |
   #           linux/amd64/v2
   #         push: ${{ github.ref == 'refs/heads/master' }}
