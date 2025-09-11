@@ -144,11 +144,17 @@ def buildparser():
     return parser
 
 def container(args):
-    docker_args = [RUNNER, "run", "-i", "-t",
-                   "-u", "builder",
-                   ]
+    docker_args = [RUNNER, "run", "-i", "-t"]
+
     if is_podman(RUNNER):
-        docker_args += ["--userns=keep-id", "--security-opt", "label=disable"]
+        # With podman we use the `--userns` option to map the builder user to the user on the system.
+        # The container will start with that user and not as root as with docker
+        docker_args += ["--userns=keep-id:uid=1000,gid=1000", "--security-opt", "label=disable"]
+    else:
+        # With docker, the container starts as root and modify the builder user in the entrypoint to
+        # match the uid:gid of the user launching the container, and then continue with the builder
+        # user thanks to gosu.
+        docker_args += ["-e", f'BUILDER_UID={os.getuid()}', "-e", f'BUILDER_GID={os.getgid()}']
 
     # common args
     if args.no_exit:
