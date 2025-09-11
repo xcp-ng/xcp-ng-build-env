@@ -41,6 +41,8 @@ RUN     dnf update -y \
         # clean package cache to avoid download errors
         && yum clean all
 
+ENV     UPSTREAM_REPOS="appstream baseos crb epel extras alma10-devel"
+
 # enable repositories commonly required to build
 RUN     dnf config-manager --enable crb
 
