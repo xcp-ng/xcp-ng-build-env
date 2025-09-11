@@ -56,6 +56,8 @@ def add_common_args(parser):
                        'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
     group.add_argument('--no-update', action='store_true',
                        help='do not run "yum update" on container start, use it as it was at build time')
+    group.add_argument('--no-network', action='store_true',
+                       help='disable all networking support in the build environment')
 
 def add_container_args(parser):
     group = parser.add_argument_group("container arguments")
@@ -119,6 +121,26 @@ def buildparser():
     group_build.add_argument(
         '--rpmbuild-stage', action='store',
         help=f"Request given -bX stage rpmbuild, X in [{RPMBUILD_STAGES}]")
+    parser_build.add_argument(
+        '--builddep-dir',
+        help="Directory where the build-dependency RPMs will be taken from.")
+
+    # builddep -- fetch/cache builddep of an rpm using a container
+    parser_builddep = subparsers_container.add_parser(
+        'builddep',
+        help="Fetch dependencies for the spec file(s) found in the SPECS/ subdirectory "
+             "of the directory passed as parameter.")
+    add_container_args(parser_builddep)
+    add_common_args(parser_builddep)
+    group_builddep = parser_builddep.add_argument_group("builddep arguments")
+    group_builddep.add_argument(
+        'builddep_dir',
+        help="Directory where the build-dependency RPMs will be cached. "
+             "The directory is created if it doesn't exist")
+    group_builddep.add_argument(
+        'source_dir', nargs='?', default='.',
+        help="Root path where SPECS/ and SOURCES are available. "
+             "The default is the working directory")
 
     # run -- execute commands inside a container
     parser_run = subparsers_container.add_parser(
@@ -176,6 +198,11 @@ def container(args):
         docker_args += ["-e", "DISABLEREPO=%s" % args.disablerepo]
     if args.no_update:
         docker_args += ["-e", "NOUPDATE=1"]
+    if args.no_network:
+        docker_args += ["--network", "none"]
+
+    if args.no_network and not args.no_update:
+        print("WARNING: network disabled but --no-update not passed", file=sys.stderr)
 
     # container args
     if args.volume:
@@ -208,6 +235,9 @@ def container(args):
     # action-specific
     match args.action:
         case 'build':
+            if args.no_network and not args.builddep_dir:
+                print("WARNING: network disabled but --builddep-dir not passed", file=sys.stderr)
+
             build_dir = os.path.abspath(args.source_dir)
             if args.define:
                 docker_args += ["-e", "RPMBUILD_DEFINE=%s" % args.define]
@@ -222,10 +252,36 @@ def container(args):
                     print(f"--rpmbuild-stage={args.rpmbuild_stage} not in '{RPMBUILD_STAGES}'", file=sys.stderr)
                     sys.exit(1)
                 docker_args += ["-e", f"RPMBUILD_STAGE={args.rpmbuild_stage}"]
+            if args.builddep_dir:
+                subprocess.check_call(["createrepo_c", "--compatibility", args.builddep_dir])
+                docker_args += ["-v", "%s:/home/builder/builddep:ro" %
+                                os.path.abspath(args.builddep_dir)]
+                with open(os.path.join(args.builddep_dir, "builddep.repo"), "wt") as repofd:
+                    repofd.write("""
+[builddeps]
+name=Package build dependencies
+baseurl=file:///home/builder/builddep/
+enabled=1
+repo_gpgcheck=0
+gpgcheck=0
+                    """)
+                # need rw for --disablerepo=* --enablerepo=builddeb <sigh>
+                docker_args += ["-v", "%s/builddep.repo:/etc/yum.repos.d/builddep.repo:rw" %
+                                os.path.abspath(args.builddep_dir)]
 
             docker_args += ["-v", f"{build_dir}:/home/builder/rpmbuild"]
             docker_args += ["-e", "BUILD_LOCAL=1"]
             print(f"Building directory {build_dir}", file=sys.stderr)
+
+        case 'builddep':
+            build_dir = os.path.abspath(args.source_dir)
+            docker_args += ["-v", f"{build_dir}:/home/builder/rpmbuild"]
+            docker_args += ["-e", "BUILD_DEPS=1"]
+
+            if args.builddep_dir:
+                os.makedirs(args.builddep_dir, exist_ok=True)
+                docker_args += ["-v", "%s:/home/builder/builddep:rw" %
+                                os.path.abspath(args.builddep_dir)]
 
         case 'run':
             docker_args += ["-e", "COMMAND=%s" % ' '.join(args.command)]
