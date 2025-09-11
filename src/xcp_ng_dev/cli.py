@@ -55,6 +55,8 @@ def add_common_args(parser):
                        'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
     group.add_argument('--no-update', action='store_true',
                        help='do not run "yum update" on container start, use it as it was at build time')
+    group.add_argument('--no-network', action='store_true',
+                       help='disable all networking support in the build environment')
 
 def add_container_args(parser):
     group = parser.add_argument_group("container arguments")
@@ -175,6 +177,11 @@ def container(args):
         docker_args += ["-e", "DISABLEREPO=%s" % args.disablerepo]
     if args.no_update:
         docker_args += ["-e", "NOUPDATE=1"]
+    if args.no_network:
+        docker_args += ["--network", "none"]
+
+    if args.no_network and not args.no_update:
+        print("WARNING: network disabled but --no-update not passed", file=sys.stderr)
 
     # container args
     if args.volume:
@@ -207,6 +214,9 @@ def container(args):
     # action-specific
     match args.action:
         case 'build':
+            if args.no_network and not args.local_repo:
+                print("WARNING: network disabled but --local-repo not passed", file=sys.stderr)
+
             build_dir = os.path.abspath(args.source_dir)
             if args.define:
                 docker_args += ["-e", "RPMBUILD_DEFINE=%s" % args.define]
