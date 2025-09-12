@@ -67,7 +67,7 @@ fi
 
 if [ -z "$NOUPDATE" ]; then
     # update to either install newer updates or to take packages from added repos into account
-    sudo $DNF update -y --disablerepo=epel
+    sudo $DNF update -y --disablerepo=epel | cat
 fi
 
 cd "$HOME"
@@ -109,11 +109,11 @@ if [ -n "$BUILD_LOCAL$BUILD_DEPS" ]; then
             if [ -d ~/builddep/ ]; then
                 BDEPFLAGS+=(--downloaddir ~/builddep/)
             fi
-            sudo $BDEP "${SPECFLAGS[@]}" --downloadonly "${BDEPFLAGS[@]}" -y $specs
+            sudo $BDEP "${SPECFLAGS[@]}" --downloadonly "${BDEPFLAGS[@]}" -y $specs | cat
         fi
 
         if [ -n "$BUILD_LOCAL" ]; then
-            sudo $BDEP "${SPECFLAGS[@]}" -y $specs
+            sudo $BDEP "${SPECFLAGS[@]}" -y $specs | cat
             : ${RPMBUILD_STAGE:=a}  # default if not specified: -ba
             RPMBUILDFLAGS=(
                 -b${RPMBUILD_STAGE} $specs
