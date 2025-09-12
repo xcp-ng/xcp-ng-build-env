@@ -54,6 +54,8 @@ def add_common_args(parser):
     group.add_argument('--disablerepo',
                        help='disable repositories. Same syntax as yum\'s --disablerepo parameter. '
                        'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
+    group.add_argument('--local-repo', action='append', default=[],
+                       help="Directory where the build-dependency RPMs will be taken from.")
     group.add_argument('--no-update', action='store_true',
                        help='do not run "yum update" on container start, use it as it was at build time')
     group.add_argument('--bootstrap', action='store_true',
@@ -123,9 +125,6 @@ def buildparser():
     group_build.add_argument(
         '--rpmbuild-stage', action='store',
         help=f"Request given -bX stage rpmbuild, X in [{RPMBUILD_STAGES}]")
-    parser_build.add_argument(
-        '--builddep-dir',
-        help="Directory where the build-dependency RPMs will be taken from.")
 
     # builddep -- fetch/cache builddep of an rpm using a container
     parser_builddep = subparsers_container.add_parser(
@@ -166,6 +165,23 @@ def buildparser():
     group_shell = parser_run.add_argument_group("shell arguments")
 
     return parser
+
+def _setup_repo(repo_dir, name, docker_args):
+    subprocess.check_call(["createrepo_c", "--compatibility", repo_dir])
+    outer_path = os.path.abspath(repo_dir)
+    inner_path = f"/home/builder/local-repos/{name}"
+    docker_args += ["-v", f"{outer_path}:{inner_path}:ro" ]
+    with open(os.path.join(repo_dir, "builddep.repo"), "wt") as repofd:
+        repofd.write(f"""
+[{name}]
+name=Local repository - {name} from {outer_path}
+baseurl=file:///home/builder/local-repos/{name}/
+enabled=1
+repo_gpgcheck=0
+gpgcheck=0
+        """)
+    # need rw for --disablerepo=* --enablerepo=builddeb <sigh>
+    docker_args += ["-v", f"{outer_path}/builddep.repo:/etc/yum.repos.d/{name}.repo:rw"]
 
 def container(args):
     docker_args = [RUNNER, "run", "-i", "-t"]
@@ -234,11 +250,15 @@ def container(args):
     if args.debug:
         docker_args += ["-e", "SCRIPT_DEBUG=1"]
 
+    for repo in args.local_repo:
+        # FIXME: ensure name is unique
+        _setup_repo(repo, os.path.basename(repo), docker_args)
+
     # action-specific
     match args.action:
         case 'build':
-            if args.no_network and not args.builddep_dir:
-                print("WARNING: network disabled but --builddep-dir not passed", file=sys.stderr)
+            if args.no_network and not args.local_repo:
+                print("WARNING: network disabled but --local-repo not passed", file=sys.stderr)
 
             build_dir = os.path.abspath(args.source_dir)
             if args.define:
@@ -254,22 +274,6 @@ def container(args):
                     print(f"--rpmbuild-stage={args.rpmbuild_stage} not in '{RPMBUILD_STAGES}'", file=sys.stderr)
                     sys.exit(1)
                 docker_args += ["-e", f"RPMBUILD_STAGE={args.rpmbuild_stage}"]
-            if args.builddep_dir:
-                subprocess.check_call(["createrepo_c", "--compatibility", args.builddep_dir])
-                docker_args += ["-v", "%s:/home/builder/builddep:ro" %
-                                os.path.abspath(args.builddep_dir)]
-                with open(os.path.join(args.builddep_dir, "builddep.repo"), "wt") as repofd:
-                    repofd.write("""
-[builddeps]
-name=Package build dependencies
-baseurl=file:///home/builder/builddep/
-enabled=1
-repo_gpgcheck=0
-gpgcheck=0
-                    """)
-                # need rw for --disablerepo=* --enablerepo=builddeb <sigh>
-                docker_args += ["-v", "%s/builddep.repo:/etc/yum.repos.d/builddep.repo:rw" %
-                                os.path.abspath(args.builddep_dir)]
 
             docker_args += ["-v", f"{build_dir}:/home/builder/rpmbuild"]
             docker_args += ["-e", "BUILD_LOCAL=1"]
