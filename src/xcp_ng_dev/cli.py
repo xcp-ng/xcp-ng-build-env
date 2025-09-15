@@ -16,6 +16,8 @@ import sys
 
 import argcomplete
 
+from xcp_ng_dev.koji import koji_init_parser
+
 CONTAINER_PREFIX = "ghcr.io/xcp-ng/xcp-ng-build-env"
 
 DEFAULT_ULIMIT_NOFILE = 2048
@@ -81,6 +83,8 @@ def buildparser():
     subparsers_env = parser.add_subparsers(
         required=True, title="Development environments",
         help="Available environments")
+
+    koji_init_parser(subparsers_env)
 
     # container-based workflow
     parser_container = subparsers_env.add_parser('container', help="Use a local container to build a package")
