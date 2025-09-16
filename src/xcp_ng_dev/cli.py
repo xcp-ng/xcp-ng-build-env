@@ -251,10 +251,5 @@ def main():
 
     sys.exit(return_code)
 
-def build():
-    bargs = [os.path.join(os.path.dirname(__file__), 'build.sh')] + sys.argv[1:]
-    return_code = subprocess.call(bargs)
-    sys.exit(return_code)
-
 if __name__ == "__main__":
     main()

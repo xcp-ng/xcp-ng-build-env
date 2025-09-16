@@ -13,7 +13,7 @@ for REPO in ${REPOS}; do
     git clone --branch "$TARGET_XCP_NG_VERSION" https://github.com/xcp-ng-rpms/"$REPO" "$REPO_PATH/$REPO"
 done
 
-xcp-ng-dev-env-create "$TARGET_XCP_NG_VERSION"
+./container/build.sh "$TARGET_XCP_NG_VERSION"
 
 CONTAINER_NAME=${CONTAINER_NAME:-build-env}
 
