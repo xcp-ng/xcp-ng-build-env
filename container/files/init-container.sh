@@ -25,6 +25,10 @@ os_release()
     )
 }
 
+if [ -n "${PATH_PREPEND}" ]; then
+    PATH="${PATH_PREPEND}:${PATH}"
+fi
+
 OS_NAME=$(os_name)
 OS_RELEASE=$(os_release)
 
@@ -63,6 +67,12 @@ fi
 # enable additional repositories if needed
 if [ -n "$ENABLEREPO" ]; then
     sudo $CFGMGR --enable "$ENABLEREPO"
+fi
+
+# disable ccache unless its use was required
+if [ -z "$CCACHE_DIR" ]; then
+    echo >&2 "Note: uninstalling not-requested ccache"
+    sudo $DNF remove -y ccache
 fi
 
 if [ -z "$NOUPDATE" ]; then
