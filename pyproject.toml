@@ -8,6 +8,7 @@ license-files = ["LICENSE"]
 dynamic = ["version"]
 dependencies = [
   "argcomplete",
+  "specfile",
 ]
 
 [dependency-groups]
