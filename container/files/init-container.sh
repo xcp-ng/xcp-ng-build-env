@@ -69,12 +69,6 @@ if [ -n "$ENABLEREPO" ]; then
     sudo $CFGMGR --enable "$ENABLEREPO"
 fi
 
-# disable ccache unless its use was required
-if [ -z "$CCACHE_DIR" ]; then
-    echo >&2 "Note: uninstalling not-requested ccache"
-    sudo $DNF remove -y ccache
-fi
-
 if [ -z "$NOUPDATE" ]; then
     # update to either install newer updates or to take packages from added repos into account
     sudo $DNF update -y --disablerepo=epel
