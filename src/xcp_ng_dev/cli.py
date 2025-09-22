@@ -168,7 +168,7 @@ def buildparser():
     return parser
 
 def _setup_repo(repo_dir, name, docker_args):
-    subprocess.check_call(["createrepo_c", "--compatibility", repo_dir])
+    subprocess.check_call(["createrepo_c", "--quiet", "--compatibility", repo_dir])
     outer_path = os.path.abspath(repo_dir)
     inner_path = f"/home/builder/local-repos/{name}"
     docker_args += ["-v", f"{outer_path}:{inner_path}:ro" ]
@@ -182,7 +182,7 @@ repo_gpgcheck=0
 gpgcheck=0
 priority=1
         """)
-    # need rw for --disablerepo=* --enablerepo=builddeb <sigh>
+    # need rw for --disablerepo=* --enablerepo={name} <sigh>
     docker_args += ["-v", f"{outer_path}/builddep.repo:/etc/yum.repos.d/{name}.repo:rw"]
 
 def container(args):
