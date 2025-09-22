@@ -102,11 +102,11 @@ def add_common_args(parser):
     group.add_argument('-d', '--dir', action='append', type=dir_path,
                        help='Local dir to mount in the '
                        'image. Will be mounted at /external/<dirname>')
-    group.add_argument('-a', '--enablerepo',
+    group.add_argument('-a', '--enablerepo', action='append',
                        help='additional repositories to enable before installing build dependencies. '
                        'Same syntax as yum\'s --enablerepo parameter. Available additional repositories: '
                        'check files/xcp-ng.repo.*.x.in.')
-    group.add_argument('--disablerepo',
+    group.add_argument('--disablerepo', action='append',
                        help='disable repositories. Same syntax as yum\'s --disablerepo parameter. '
                        'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
     group.add_argument('-U', '--enable-upstream-repos', action='store_true', help='enable the upstream repositories')
@@ -287,9 +287,9 @@ def container(args):
     if args.enable_upstream_repos:
         docker_args += ["-e", "ENABLE_UPSTREAM_REPOS=true"]
     if args.enablerepo:
-        docker_args += ["-e", "ENABLEREPO=%s" % args.enablerepo]
+        docker_args += ["-e", "ENABLEREPO=%s" % ','.join(args.enablerepo)]
     if args.disablerepo:
-        docker_args += ["-e", "DISABLEREPO=%s" % args.disablerepo]
+        docker_args += ["-e", "DISABLEREPO=%s" % ','.join(args.disablerepo)]
     if args.no_update:
         docker_args += ["-e", "NOUPDATE=1"]
     if args.no_network:
