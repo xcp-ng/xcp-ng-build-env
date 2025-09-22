@@ -48,11 +48,11 @@ def add_common_args(parser):
                        f'{RUNNER} -e')
     parser.add_argument('--ccache', action='store',
                         help="Use given directory as a cache for ccache")
-    group.add_argument('-a', '--enablerepo',
+    group.add_argument('-a', '--enablerepo', action='append',
                        help='additional repositories to enable before installing build dependencies. '
                        'Same syntax as yum\'s --enablerepo parameter. Available additional repositories: '
                        'check files/xcp-ng.repo.*.x.in.')
-    group.add_argument('--disablerepo',
+    group.add_argument('--disablerepo', action='append',
                        help='disable repositories. Same syntax as yum\'s --disablerepo parameter. '
                        'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
     group.add_argument('--local-repo', action='append', default=[],
@@ -219,9 +219,9 @@ def container(args):
                         "-e", "PATH_PREPEND=/usr/lib64/ccache",
                         ]
     if args.enablerepo:
-        docker_args += ["-e", "ENABLEREPO=%s" % args.enablerepo]
+        docker_args += ["-e", "ENABLEREPO=%s" % ','.join(args.enablerepo)]
     if args.disablerepo:
-        docker_args += ["-e", "DISABLEREPO=%s" % args.disablerepo]
+        docker_args += ["-e", "DISABLEREPO=%s" % ','.join(args.disablerepo)]
     if args.no_update:
         docker_args += ["-e", "NOUPDATE=1"]
     if args.no_network:
