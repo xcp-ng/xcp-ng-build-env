@@ -186,7 +186,7 @@ priority=1
     docker_args += ["-v", f"{outer_path}/builddep.repo:/etc/yum.repos.d/{name}.repo:rw"]
 
 def container(args):
-    docker_args = [RUNNER, "run", "-i", "-t"]
+    docker_args = [RUNNER, "run"]
 
     if is_podman(RUNNER):
         # With podman we use the `--userns` option to map the builder user to the user on the system.
@@ -301,8 +301,7 @@ def container(args):
             docker_args += ["-e", "COMMAND=%s" % ' '.join(args.command)]
 
         case 'shell':
-            # no argument
-            pass
+            docker_args += ["--interactive", "--tty"]
 
     tag = args.container_version
     if args.bootstrap:
