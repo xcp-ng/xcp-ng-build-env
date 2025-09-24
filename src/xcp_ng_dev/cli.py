@@ -343,6 +343,7 @@ def container(args):
 
     if args.debug:
         docker_args += ["-e", "SCRIPT_DEBUG=1"]
+        docker_args += ["--log-level=debug"]
 
     # Some build systems try to re-open /dev/stderr (->
     # /dev/pts/0), so make sure pseudo-tty can be attached to
