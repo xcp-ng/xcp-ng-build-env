@@ -56,7 +56,9 @@ def add_common_args(parser):
                        help='disable repositories. Same syntax as yum\'s --disablerepo parameter. '
                        'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
     group.add_argument('--local-repo', action='append', default=[],
-                       help="Directory where the build-dependency RPMs will be taken from.")
+                       help="Directory where the build-dependency RPMs will be taken from, "
+                       "in a [REPONAME:]DIRECTORY format, where REPONAME defaults to the basename "
+                       "of DIRECTORY.")
     group.add_argument('--no-update', action='store_true',
                        help='do not run "yum update" on container start, use it as it was at build time')
     group.add_argument('--bootstrap', action='store_true',
@@ -259,8 +261,10 @@ def container(args):
         docker_args += ["-e", "SCRIPT_DEBUG=1"]
 
     for repo in args.local_repo:
-        # FIXME: ensure name is unique
-        _setup_repo(repo, os.path.basename(repo), docker_args)
+        repo_def = repo.split(":")
+        assert len(repo_def) <= 2
+        repo_nick = repo_def[0] if len(repo_def) == 2 else os.path.basename(repo)
+        _setup_repo(repo_def[-1], repo_nick, docker_args)
 
     # action-specific
     match args.action:
