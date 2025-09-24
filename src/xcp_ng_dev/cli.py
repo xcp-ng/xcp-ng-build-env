@@ -259,6 +259,7 @@ def container(args):
 
     if args.debug:
         docker_args += ["-e", "SCRIPT_DEBUG=1"]
+        docker_args += ["--log-level=debug"]
 
     for repo in args.local_repo:
         repo_def = repo.split(":")
