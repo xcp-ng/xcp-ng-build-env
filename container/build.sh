@@ -96,11 +96,13 @@ case "$1" in
         ;;
 esac
 
+EXTRA_ARGS=()
+
 if [ $BOOTSTRAP = 0 ]; then
     TAG=${1}
 else
     TAG=${1}-bootstrap
-    CUSTOM_ARGS+=( "--build-arg" "BOOTSTRAP=1" )
+    EXTRA_ARGS+=( "--build-arg" "BOOTSTRAP=1" )
 fi
 
 "$RUNNER" build \
@@ -108,4 +110,5 @@ fi
     -t ghcr.io/xcp-ng/xcp-ng-build-env:${TAG} \
     --build-arg XCP_NG_BRANCH=${1} \
     --ulimit nofile=1024 \
+    "${EXTRA_ARGS[@]}" \
     -f $DOCKERFILE .
