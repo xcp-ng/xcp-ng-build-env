@@ -21,6 +21,11 @@ Usage: $SELF_NAME [--platform PF] <version>
 ... where <version> is a 'x.y' version such as 8.0.
 
 --platform      override the default platform for the build container.
+--add-repo NICK:URL
+                add specified directory or URL as a repo.
+                Note: Local folders can only be passed using podman, because
+                      docker doesn't support bind mount. Remote URLs can be
+                      used with both docker and podman.
 --overlay-cache use the image cache instead of rebuilding from scratch.
 --variant <bootstrap|isarpm>
                 "bootstrap" generates a bootstrap image, needed to build xcp-ng-release.
@@ -32,6 +37,7 @@ PLATFORM=
 EXTRA_ARGS=()
 OVERLAY_CACHE=0
 VARIANT=build
+REPO=
 while [ $# -ge 1 ]; do
     case "$1" in
         --help|-h)
@@ -52,6 +58,11 @@ while [ $# -ge 1 ]; do
                 bootstrap|isarpm) VARIANT="$2" ;;
                 *) die_usage "$1 must be one of: bootstrap, isarpm" ;;
             esac
+            shift
+            ;;
+        --add-repo)
+            [ $# -ge 2 ] || die_usage "$1 needs an argument"
+            REPO="$2"
             shift
             ;;
         -*)
@@ -149,6 +160,50 @@ case $VARIANT in
         echo >&2 "Unsupported --variant '$VARIANT'"
         ;;
 esac
+
+# handle --add-repo
+if [ -n "$REPO" ]; then
+    REPONICK=${REPO%%:*}
+    REPOLOC=${REPO#*:}
+    case "$REPOLOC" in
+        http://*|https://*|ftp://*)
+            REPOCONTENT=$(cat <<EOF
+[$REPONICK]
+name=Repository - $REPONICK from $REPOLOC
+baseurl=$REPOLOC
+enabled=1
+repo_gpgcheck=0
+gpgcheck=0
+priority=1
+EOF
+            )
+            EXTRA_ARGS+=(
+                "--build-arg" "EXTRA_REPO_NICK=$REPONICK"
+                "--build-arg" "EXTRA_REPO_CONTENT=$(printf '%s' "$REPOCONTENT" | base64 -w0)"
+            )
+            ;;
+        *)
+            # local directory: bind-mount it in (podman only, needs
+            # bind-mount support in build)
+            [ "$RUNNER" = "podman" ] ||
+                die "--add-repo with a local directory needs podman (docker build has no bind-mount support)."
+            REPOCONF=$(mktemp)
+            cat > $REPOCONF <<EOF
+[$REPONICK]
+name=Local repository - $REPONICK from $REPOLOC
+baseurl=file:///local-repos/$REPONICK/
+enabled=1
+repo_gpgcheck=0
+gpgcheck=0
+priority=1
+EOF
+            EXTRA_ARGS+=(
+                "-v" "$REPOCONF:/etc/yum.repos.d/$REPONICK.repo:rw"
+                "-v" "$REPOLOC:/local-repos/$REPONICK:ro"
+            )
+            ;;
+    esac
+fi
 
 "$RUNNER" build \
     --platform "$PLATFORM" \
