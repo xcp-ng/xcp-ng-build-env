@@ -21,6 +21,8 @@ Usage: $SELF_NAME [--platform PF] <version>
 ... where <version> is a 'x.y' version such as 8.0.
 
 --platform   override the default platform for the build container.
+--add-repo NICK:DIR
+             add specified directory as a repo
 --bootstrap  generate a bootstrap image, needed to build xcp-ng-release.
 --isarpm     (internal) generate an image suitable for the ISARPM build system.
 EOF
@@ -30,6 +32,7 @@ PLATFORM=
 EXTRA_ARGS=()
 OVERLAY_CACHE=0
 VARIANT=build
+REPO=
 while [ $# -ge 1 ]; do
     case "$1" in
         --help|-h)
@@ -49,6 +52,11 @@ while [ $# -ge 1 ]; do
             ;;
         --isarpm)
             VARIANT=isarpm
+            ;;
+        --add-repo)
+            [ $# -ge 2 ] || die_usage "$1 needs an argument"
+            REPO="$2"
+            shift
             ;;
         -*)
             die_usage "unknown flag '$1'"
@@ -145,6 +153,26 @@ case $VARIANT in
         echo >&2 "Unsupported --variant '$VARIANT'"
         ;;
 esac
+
+# handle --add-repo
+if [ -n "$REPO" ]; then
+    REPOCONF=$(mktemp)
+    REPONICK=${REPO%:*}
+    REPODIR=${REPO#*:}
+    cat > $REPOCONF <<EOF
+[$REPONICK]
+name=Local repository - $REPONICK from $REPODIR
+baseurl=file:///local-repos/$REPONICK/
+enabled=1
+repo_gpgcheck=0
+gpgcheck=0
+priority=1
+EOF
+    EXTRA_ARGS+=(
+        "-v" "$REPOCONF:/etc/yum.repos.d/$REPONICK.repo:rw"
+        "-v" "$REPODIR:/local-repos/$REPONICK:ro"
+    )
+fi
 
 "$RUNNER" build \
     --platform "$PLATFORM" \
