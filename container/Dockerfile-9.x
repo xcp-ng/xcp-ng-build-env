@@ -41,7 +41,6 @@ RUN     dnf update -y \
             vim \
             wget \
             which \
-        # -release*, to be commented out to boostrap the build-env until it gets built
         # FIXME: isn't it already pulled as almalinux-release when available?
         && if [ "${BOOTSTRAP}" = 0 ]; then \
             dnf install -y \
