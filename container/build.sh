@@ -22,11 +22,12 @@ Usage: $SELF_NAME [--platform PF] <version>
 
 --platform   override the default platform for the build container.
 --bootstrap  generate a bootstrap image, needed to build xcp-ng-release.
+--isarpm     (internal) generate an image suitable for the ISARPM build system.
 EOF
 }
 
 PLATFORM=
-BOOTSTRAP=0
+VARIANT=build
 while [ $# -ge 1 ]; do
     case "$1" in
         --help|-h)
@@ -39,7 +40,11 @@ while [ $# -ge 1 ]; do
             shift
             ;;
         --bootstrap)
-            BOOTSTRAP=1
+            VARIANT=bootstrap
+            ;;
+        --isarpm)
+            VARIANT=isarpm
+            ;;
             ;;
         -*)
             die_usage "unknown flag '$1'"
@@ -55,7 +60,7 @@ done
 
 case "$1" in
     8.*)
-        [ $BOOTSTRAP = 0 ] || die "--bootstrap is only supported for XCP-ng 9.0 and newer"
+        [ $VARIANT = build ] || die "--variant is only supported for XCP-ng 9.0 and newer"
         ;;
 esac
 
@@ -98,11 +103,23 @@ esac
 
 EXTRA_ARGS=()
 
-if [ $BOOTSTRAP = 0 ]; then
-    TAG=${1}
-else
-    TAG=${1}-bootstrap
-    EXTRA_ARGS+=( "--build-arg" "BOOTSTRAP=1" )
+case $VARIANT in
+    build)
+        TAG=${1}
+        ;;
+    bootstrap)
+        TAG=${1}-bootstrap
+        EXTRA_ARGS+=( "--build-arg" "VARIANT=bootstrap" )
+        ;;
+    isarpm)
+        TAG=${1}-isarpm
+        EXTRA_ARGS+=( "--build-arg" "VARIANT=isarpm" )
+        ;;
+    *)
+        echo >&2 "Unsupported --variant '$VARIANT'"
+        ;;
+esac
+
 fi
 
 "$RUNNER" build \

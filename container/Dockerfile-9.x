@@ -1,10 +1,12 @@
 FROM    ghcr.io/almalinux/10-base:10.0
 
-ARG     BOOTSTRAP=0
+ARG     VARIANT=build
 
 # Add our repositories
 # temporary bootstrap repository
+# FIXME: if [ ${VARIANT} = build ]
 COPY    files/xcp-ng-8.99.repo /etc/yum.repos.d/xcp-ng.repo
+
 # Almalinux 10 devel
 COPY    files/Alma10-devel.repo /etc/yum.repos.d/
 
@@ -12,7 +14,7 @@ COPY    files/Alma10-devel.repo /etc/yum.repos.d/
 RUN     curl -sSf https://xcp-ng.org/RPM-GPG-KEY-xcpng -o /etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 
 # dnf config-manager not available yet?
-RUN     if [ "${BOOTSTRAP}" = 1 ]; then \
+RUN     if [ ${VARIANT} != build ]; then \
             sed -i -e 's/^enabled=1$/enabled=0/' /etc/yum.repos.d/xcp-ng.repo; \
         fi
 
@@ -42,7 +44,7 @@ RUN     dnf update -y \
             wget \
             which \
         # FIXME: isn't it already pulled as almalinux-release when available?
-        && if [ "${BOOTSTRAP}" = 0 ]; then \
+        && if [ ${VARIANT} != bootstrap ]; then \
             dnf install -y \
             xcp-ng-release \
             xcp-ng-release-presets; \
