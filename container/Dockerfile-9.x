@@ -26,6 +26,7 @@ RUN     dnf install -y \
             gcc \
             gcc-c++ \
             git \
+            git-lfs \
             make \
             rpm-build \
             redhat-rpm-config \
