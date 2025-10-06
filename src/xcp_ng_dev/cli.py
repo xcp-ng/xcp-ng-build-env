@@ -63,6 +63,8 @@ def add_common_args(parser):
                        help='do not run "yum update" on container start, use it as it was at build time')
     group.add_argument('--bootstrap', action='store_true',
                        help='use a bootstrap build-env, able to build xc-ng-release')
+    group.add_argument('--isarpm', action='store_true',
+                       help='(internal) use a build-env suitable for the ISARPM build system')
     group.add_argument('--no-network', action='store_true',
                        help='disable all networking support in the build environment')
 
@@ -311,6 +313,8 @@ def container(args):
     tag = args.container_version
     if args.bootstrap:
         tag += "-bootstrap"
+    if args.isarpm:
+        tag += "-isarpm"
 
     # exec "docker run"
     docker_args += [f"{CONTAINER_PREFIX}:{tag}",
