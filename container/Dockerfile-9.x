@@ -32,9 +32,10 @@ RUN     if [ "${RPMARCH}" = "aarch64" ]; then \
         fi
 
 # Update
-RUN     dnf update -y \
-        # Common build requirements
-        && dnf install -y \
+RUN     dnf update -y
+
+# Common build requirements
+RUN     dnf install -y \
             gcc \
             gcc-c++ \
             git \
@@ -44,24 +45,28 @@ RUN     dnf update -y \
             python3-rpm \
             sudo \
             dnf-plugins-core \
-            epel-release \
-        # EPEL: needs epel-release installed first
-        && dnf install -y \
+            epel-release
+
+# EPEL: needs epel-release installed first
+RUN     dnf install -y \
             epel-rpm-macros \
-            almalinux-git-utils \
-        # Niceties
-        && dnf install -y \
+            almalinux-git-utils
+
+# Niceties
+RUN     dnf install -y \
             bash-completion \
             vim \
             wget \
-            which \
-        # -release*, to be commented out to boostrap the build-env until it gets built
-        # FIXME: isn't it already pulled as almalinux-release when available?
-        && dnf install -y \
+            which
+
+# clean package cache to avoid download errors
+RUN     yum clean all
+
+# -release*, to be commented out to boostrap the build-env until it gets built
+# FIXME: isn't it already pulled as almalinux-release when available?
+RUN     dnf install -y \
             xcp-ng-release \
-            xcp-ng-release-presets \
-        # clean package cache to avoid download errors
-        && yum clean all
+            xcp-ng-release-presets
 
 # enable repositories commonly required to build
 RUN     dnf config-manager --enable crb
