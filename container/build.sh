@@ -96,7 +96,14 @@ case "$1" in
     9.*)
         DOCKERFILE=Dockerfile-9.x
         ALMA_VERSION=10.0
-        : ${PLATFORM:=linux/amd64/v2}
+        case $(uname -m) in
+            x86_64)
+                : ${PLATFORM:=linux/amd64/v2}
+                ;;
+            aarch64)
+                : ${PLATFORM:=linux/aarch64}
+                ;;
+        esac
         ;;
     8.*)
         DOCKERFILE=Dockerfile-8.x
@@ -107,6 +114,8 @@ case "$1" in
         exit 1
         ;;
 esac
+
+[ -n "$PLATFORM" ] || die "Cannot determine container platform to use, try --platform"
 
 EXTRA_ARGS=()
 
