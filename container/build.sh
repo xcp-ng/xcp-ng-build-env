@@ -156,7 +156,7 @@ EOF
     )
 fi
 
-if [ "$COMMAND" = "podman" ]; then
+if [ "$RUNNER" = "podman" ]; then
     EXTRA_ARGS+=("--security-opt" "label=disable")
 fi
 
