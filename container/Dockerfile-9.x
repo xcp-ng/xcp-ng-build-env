@@ -19,9 +19,10 @@ RUN     if [ ${VARIANT} != build ]; then \
         fi
 
 # Update
-RUN     dnf update -y \
-        # Common build requirements
-        && dnf install -y \
+RUN     dnf update -y
+
+# Common build requirements
+RUN     dnf install -y \
             gcc \
             gcc-c++ \
             git \
@@ -31,26 +32,30 @@ RUN     dnf update -y \
             python3-rpm \
             sudo \
             dnf-plugins-core \
-            epel-release \
-        # EPEL: needs epel-release installed first
-        && dnf install -y \
+            epel-release
+
+# EPEL: needs epel-release installed first
+RUN     dnf install -y \
             epel-rpm-macros \
             almalinux-git-utils \
-            ccache \
-        # Niceties
-        && dnf install -y \
+            ccache
+
+# Niceties
+RUN     dnf install -y \
             bash-completion \
             vim \
             wget \
-            which \
-        # FIXME: isn't it already pulled as almalinux-release when available?
-        && if [ ${VARIANT} != bootstrap ]; then \
+            which
+
+# clean package cache to avoid download errors
+RUN     yum clean all
+
+# FIXME: isn't it already pulled as almalinux-release when available?
+RUN     if [ ${VARIANT} != bootstrap ]; then \
             dnf install -y \
             xcp-ng-release \
             xcp-ng-release-presets; \
-        fi \
-        # clean package cache to avoid download errors
-        && yum clean all
+        fi
 
 # enable repositories commonly required to build
 RUN     dnf config-manager --enable crb
