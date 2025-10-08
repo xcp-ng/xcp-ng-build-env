@@ -11,6 +11,7 @@ Simplifies the creation of a build environment for XCP-ng packages.
 import argparse
 import json
 import os
+import platform
 import shlex
 import shutil
 import subprocess
@@ -318,9 +319,20 @@ def container(args):
     if not ulimit_nofile:
         docker_args += ["--ulimit", "nofile=%s" % DEFAULT_ULIMIT_NOFILE]
 
-    docker_arch = args.platform or ("linux/amd64/v2"
-                                    if args.container_version == "9.0"
-                                    else "linux/amd64")
+    match platform.machine():
+        case 'x86_64':
+            DEFAULT_PLATFORM = ("linux/amd64/v2"
+                                if args.container_version == "9.0"
+                                else "linux/amd64")
+        case 'aarch64':
+            DEFAULT_PLATFORM = "linux/aarch64"
+        case arch:
+            print(f"Note: no default container platform known for {arch}", file=sys.stderr)
+            DEFAULT_PLATFORM = None
+
+    docker_arch = args.platform or DEFAULT_PLATFORM
+    if not docker_arch:
+        raise Exception("cannot determine container platform to use")
 
     image_name = f"{CONTAINER_PREFIX}:{args.container_version}"
     if args.pull is not None:
@@ -329,6 +341,7 @@ def container(args):
         pull_policy = "never"
     else:
         pull_policy = "always"
+
     docker_args += ["--platform", docker_arch]
     docker_args += ["--pull", pull_policy]
 
