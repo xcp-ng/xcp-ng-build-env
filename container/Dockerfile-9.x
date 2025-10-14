@@ -35,6 +35,12 @@ RUN     dnf install -y \
             dnf-plugins-core \
             epel-release
 
+# HACK make sure we are not pointed to one of the RSYNC mirrors, which curl does not support
+RUN    sed -i.orig \
+    -e s,^metalink,#metalink, \
+    -e s,^#baseurl=https://download.example/pub/epel/.releasever..releasever_minor:+z.,baseurl=http://mirror.in2p3.fr/pub/epel/10.0, \
+    /etc/yum.repos.d/epel.repo
+
 # EPEL: needs epel-release installed first
 RUN     dnf install -y \
             epel-rpm-macros \
