@@ -52,6 +52,10 @@ RUN     dnf install -y \
             dnf-plugins-core \
             epel-release
 
+# Restrict the EPEL metalink to https mirrors: some of the mirrors it returns
+# are rsync-only, which curl does not support
+RUN     sed -i -e '/^metalink=/ s/$/\&protocol=https/' /etc/yum.repos.d/epel.repo
+
 # EPEL: needs epel-release installed first
 RUN     dnf install -y \
             epel-rpm-macros \
