@@ -36,8 +36,7 @@ or `pipx:`
 pipx install git+https://github.com/xcp-ng/xcp-ng-build-env
 ```
 
-After this, two new commands will be available: `xcp-ng-dev-env-create` and
-`xcp-ng-dev`.
+After this, a new command will be available: `xcp-ng-dev`.
 
 If you want to develop the package and try the changes as you develop
 the package, or prefer updating the version from a git repo rather
@@ -63,6 +62,8 @@ Depending on how you installed:
 * with `pipx`: run the same command, with `--force`
 * editable with `git`: just update your git working tree
 
+Then download the latest image with `docker pull ghcr.io/xcp-ng/xcp-ng-build-env:8.3` or `podman pull ghcr.io/xcp-ng/xcp-ng-build-env:8.3`.
+
 ## Completion
 
 ### Bash
@@ -79,15 +80,19 @@ To install the completion, run `register-python-argcomplete --shell fish xcp-ng-
 
 ## Building the container image(s)
 
+> [!NOTE]  
+> The images are typically downloaded from ghcr.io for regular usage.
+> Unless you're working on this project, you usually don't need to build the container images yourself.
+
 You need one container image per target version of XCP-ng.
 
-Clone this repository (outside any container), then use `xcp-ng-dev-env-create` to
-generate the images for the wanted releases of XCP-ng.
+Clone this repository (outside any container), then use `./container/build.sh` to
+generate the image. Adapt the version to the wanted release of XCP-ng.
 Note that Docker and Podman store container images separately.
 
 ```
-Usage: xcp-ng-dev-env-create {version_of_XCP_ng}
-... where {version_of_XCP_ng} is a 'x.y' version such as 8.0.
+Usage: ./container/build.sh [--platform PF] <version>
+... where <version> is a 'x.y' version such as 8.0.
 ```
 
 ## Using the container

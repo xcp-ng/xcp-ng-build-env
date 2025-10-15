@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-SELF_NAME="xcp-ng-dev-env-create"
+SELF_NAME=$0
 
 die() {
     echo >&2
