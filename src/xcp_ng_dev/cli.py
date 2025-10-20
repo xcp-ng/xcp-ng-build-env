@@ -282,6 +282,9 @@ def container(args):
         repo_nick = repo_def[0] if len(repo_def) == 2 else os.path.basename(repo)
         _setup_repo(repo_def[-1], repo_nick, docker_args)
 
+    # --no-exit requires a tty
+    wants_interactive = args.no_exit
+
     # action-specific
     match args.action:
         case 'build':
@@ -321,7 +324,10 @@ def container(args):
             docker_args += ["-e", "COMMAND=%s" % ' '.join(args.command)]
 
         case 'shell':
-            docker_args += ["--interactive", "--tty"]
+            wants_interactive = True
+
+    if wants_interactive:
+        docker_args += ["--interactive", "--tty"]
 
     tag = args.container_version
     if args.bootstrap:
