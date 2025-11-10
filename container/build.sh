@@ -69,7 +69,16 @@ cd $(dirname "$0")
 
 ALMA_VERSION=
 CENTOS_VERSION=
-case "$1" in
+XCP_NG_BRANCH="$1"
+IMAGE_BRANCH="${XCP_NG_BRANCH}"
+
+case "$XCP_NG_BRANCH" in
+    master)
+        # TODO: keep aligned to next release
+        XCP_NG_BRANCH=8.3
+        DOCKERFILE=Dockerfile-8.x
+        : ${PLATFORM:=linux/amd64}
+        ;;
     9.*)
         DOCKERFILE=Dockerfile-9.x
         ALMA_VERSION=10.0
@@ -80,14 +89,14 @@ case "$1" in
         : ${PLATFORM:=linux/amd64}
         ;;
     *)
-        echo >&2 "Unsupported release '$1'"
+        echo >&2 "Unsupported release '${XCP_NG_BRANCH}'"
         exit 1
         ;;
 esac
 
 "$RUNNER" build \
     --platform "$PLATFORM" \
-    -t ghcr.io/xcp-ng/xcp-ng-build-env:${1} \
-    --build-arg XCP_NG_BRANCH=${1} \
+    -t ghcr.io/xcp-ng/xcp-ng-build-env:${IMAGE_BRANCH} \
+    --build-arg XCP_NG_BRANCH=${XCP_NG_BRANCH} \
     --ulimit nofile=1024 \
     -f $DOCKERFILE .
