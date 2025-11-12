@@ -62,6 +62,8 @@ def add_common_args(parser):
                        "of DIRECTORY.")
     group.add_argument('--no-update', action='store_true',
                        help='do not run "yum update" on container start, use it as it was at build time')
+    group.add_argument('--install', action='append',
+                       help="install additional package on container start")
     group.add_argument('--bootstrap', action='store_true',
                        help='use a bootstrap build-env, able to build xc-ng-release')
     group.add_argument('--isarpm', action='store_true',
@@ -229,6 +231,8 @@ def container(args):
         docker_args += ["-e", "DISABLEREPO=%s" % ','.join(args.disablerepo)]
     if args.no_update:
         docker_args += ["-e", "NOUPDATE=1"]
+    if args.install:
+        docker_args += ["-e", "INSTALL=%s" % ' '.join(args.install)]
     if args.no_network:
         docker_args += ["--network", "none"]
 
