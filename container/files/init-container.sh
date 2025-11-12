@@ -74,6 +74,10 @@ if [ -z "$NOUPDATE" ]; then
     sudo $DNF update -y --disablerepo=epel
 fi
 
+if [ -n "$INSTALL" ]; then
+    sudo $DNF install -y $INSTALL
+fi
+
 cd "$HOME"
 
 # double the default stack size
