@@ -1,4 +1,8 @@
+# WARNING: when bumping the release, bump the releasever together below
 FROM    ghcr.io/almalinux/10-base:10.0
+
+# pin Almalinux version to avoid upgrade to 10.1+
+RUN     mkdir -p /etc/dnf/vars && echo "10.0" > /etc/dnf/vars/releasever
 
 ARG     VARIANT=build
 
