@@ -1,5 +1,6 @@
 [alma10-devel]
 name=Almalinux 10 devel
-baseurl=https://repo.almalinux.org/almalinux/10/devel/$basearch/os/
+# FIXME: $basearch should be used but won't work for v2, must find another way
+baseurl=https://repo.almalinux.org/almalinux/10/devel/x86_64_v2/os/
 enabled=1
 gpgcheck=1
