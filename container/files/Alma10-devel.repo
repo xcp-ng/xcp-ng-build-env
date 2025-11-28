@@ -1,5 +1,5 @@
 [alma10-devel]
 name=Almalinux 10 devel
-baseurl=https://repo.almalinux.org/almalinux/10/devel/$basearch/os/
+baseurl=https://repo.almalinux.org/almalinux/10.0/devel/$basearch/os/
 enabled=1
 gpgcheck=1
