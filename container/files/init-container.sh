@@ -9,6 +9,8 @@ if [ -n "$NO_EXIT" ]; then
     trap "/bin/bash --login" EXIT
 fi
 
+[ -f ~/rpmbuild/devel_env ] && source ~/rpmbuild/devel_env
+
 os_release()
 {
     (
@@ -72,7 +74,12 @@ RPMARCH=$(rpm -q glibc --qf "%{arch}")
 if [ -n "$BUILD_LOCAL" ]; then
     time (
         cd ~/rpmbuild
-        rm BUILD BUILDROOT RPMS SRPMS -rf
+        rm_folders="BUILDROOT RPMS SRPMS BUILD"
+        if [ "$KEEP_BUILD" -eq 1 ]; then
+            rm_folders="BUILDROOT RPMS SRPMS BUILD/livepatch-src"
+        fi
+
+        rm $rm_folders -rf
 
         if specs=$(ls *.spec 2>/dev/null); then
             SPECFLAGS=(
@@ -101,6 +108,9 @@ if [ -n "$BUILD_LOCAL" ]; then
             $RPMBUILD_OPTS
             "${SPECFLAGS[@]}"
         )
+
+        [ $KEEP_BUILD -eq 1 ] && RPMBUILDFLAGS+=(--noprep)
+
         # in case the build deps contain xs-opam-repo, source the added profile.d file
         [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
         if [ $? == 0 ]; then
