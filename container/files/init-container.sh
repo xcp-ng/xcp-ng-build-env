@@ -9,6 +9,8 @@ if [ -n "$NO_EXIT" ]; then
     trap "/bin/bash --login" EXIT
 fi
 
+[ -f ~/rpmbuild/devel_env ] && source ~/rpmbuild/devel_env
+
 os_name()
 {
     (
@@ -16,6 +18,7 @@ os_name()
         echo "$NAME"
     )
 }
+
 
 os_release()
 {
@@ -89,6 +92,11 @@ RPMARCH=$(rpm -q glibc --qf "%{arch}")
 if [ -n "$BUILD_LOCAL$BUILD_DEPS" ]; then
     time (
         cd ~/rpmbuild
+
+        if [ -n "$KEEP_BUILD" ]; then
+            rm BUILDROOT RPMS SRPMS BUILD/livepatch-src -rf
+        fi
+
         if [ -n "$BUILD_LOCAL" ]; then
             rm BUILD BUILDROOT RPMS SRPMS -rf
         fi
@@ -123,6 +131,9 @@ if [ -n "$BUILD_LOCAL$BUILD_DEPS" ]; then
             sudo $BDEP "${SPECFLAGS[@]}" --downloadonly "${BDEPFLAGS[@]}" -y $specs
         fi
 
+
+
+
         if [ -n "$BUILD_LOCAL" ]; then
             sudo $BDEP "${SPECFLAGS[@]}" -y $specs
             : ${RPMBUILD_STAGE:=a}  # default if not specified: -ba
@@ -132,6 +143,9 @@ if [ -n "$BUILD_LOCAL$BUILD_DEPS" ]; then
                 $RPMBUILD_OPTS
                 "${SPECFLAGS[@]}"
             )
+
+            [ $KEEP_BUILD -eq 1 ] && RPMBUILDFLAGS+=(--noprep)
+
             # in case the build deps contain xs-opam-repo, source the added profile.d file
             [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
             if [ $? == 0 ]; then

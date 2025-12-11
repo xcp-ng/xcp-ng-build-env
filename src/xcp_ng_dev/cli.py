@@ -79,6 +79,8 @@ def add_container_args(parser):
                        help=f'Volume mounts passed directly to {RUNNER} -v')
     group.add_argument('--no-rm', action='store_true',
                        help='Do not destroy the container on exit')
+    group.add_argument('--devel', action='store_true',
+                       help='Always restart the same container as before')
     group.add_argument('--syslog', action='store_true',
                        help='Enable syslog to host by mounting in /dev/log')
     group.add_argument('--name', help='Assign a name to the container')
@@ -193,7 +195,7 @@ priority=1
     docker_args += ["-v", f"{outer_path}/builddep.repo:/etc/yum.repos.d/{name}.repo:rw"]
 
 def container(args):
-    docker_args = [RUNNER, "run"]
+    docker_args = [RUNNER, "create", "-t"]
 
     if is_podman(RUNNER):
         # With podman we use the `--userns` option to map the builder user to the user on the system.
@@ -243,8 +245,16 @@ def container(args):
     if args.volume:
         for volume in args.volume:
             docker_args += ["-v", volume]
-    if not args.no_rm:
+    if not args.no_rm and not args.devel:
         docker_args += ["--rm=true"]
+    if args.devel:
+        try:
+            with open(f"{args.source_dir}/devel_env", 'a+') as f:
+                f.seek(0)
+                if f.read().find("export KEEP_BUILD=1") == -1:
+                    f.write("export KEEP_BUILD=1\n")
+        except FileNotFoundError:
+            pass
     if args.syslog:
         docker_args += ["-v", "/dev/log:/dev/log"]
     if args.name:
@@ -330,8 +340,8 @@ def container(args):
         case 'shell':
             wants_interactive = True
 
-    if wants_interactive:
-        docker_args += ["--interactive", "--tty"]
+    #if wants_interactive:
+    #    docker_args += ["--interactive", "--tty"]
 
     tag = args.container_version
     if args.bootstrap:
@@ -339,11 +349,32 @@ def container(args):
     if args.isarpm:
         tag += "-isarpm"
 
-    # exec "docker run"
+    container_hash = ''
+
+    # exec "docker create"
     docker_args += [f"{CONTAINER_PREFIX}:{tag}",
-                    "/usr/local/bin/init-container.sh"]
-    print("Launching docker with args %s" % docker_args, file=sys.stderr)
-    return subprocess.call(docker_args)
+                    "/bin/bash"]
+
+    if args.devel:
+        try:
+            with open(f"{args.source_dir}/container_hash", 'r') as f:
+                container_hash = f.read()
+        except FileNotFoundError:
+            pass
+
+    if not container_hash:
+        print("Launching docker with args %s" % docker_args, file=sys.stderr)
+        out = subprocess.run(docker_args, capture_output=True, text=True)
+        container_hash = out.stdout.rstrip()
+        if args.devel:
+            try:
+                with open(f"{args.source_dir}/container_hash", 'w') as f:
+                    f.write(container_hash)
+            except FileNotFoundError:
+                pass
+        if out.returncode:
+            return out.returncode
+    return subprocess.call([RUNNER, "start", "-i", container_hash])
 
 def main():
     """ Main entry point. """
