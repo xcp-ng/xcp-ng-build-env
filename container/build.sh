@@ -31,6 +31,7 @@ EOF
 PLATFORM=
 VARIANT=build
 REPO=
+EXTRA_ARGS=()
 while [ $# -ge 1 ]; do
     case "$1" in
         --help|-h)
@@ -52,6 +53,9 @@ while [ $# -ge 1 ]; do
             [ $# -ge 2 ] || die_usage "$1 needs an argument"
             REPO="$2"
             shift
+            ;;
+        --no-cache)
+            EXTRA_ARGS+=(--no-cache)
             ;;
         -*)
             die_usage "unknown flag '$1'"
@@ -116,8 +120,6 @@ case "$1" in
 esac
 
 [ -n "$PLATFORM" ] || die "Cannot determine container platform to use, try --platform"
-
-EXTRA_ARGS=()
 
 case $VARIANT in
     build)
