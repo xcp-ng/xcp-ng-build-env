@@ -143,7 +143,7 @@ def buildparser():
     return parser
 
 def container(args):
-    docker_args = [RUNNER, "run", "-i", "-t"]
+    docker_args = [RUNNER, "run"]
 
     if is_podman(RUNNER):
         # With podman we use the `--userns` option to map the builder user to the user on the system.
@@ -204,6 +204,9 @@ def container(args):
     if args.debug:
         docker_args += ["-e", "SCRIPT_DEBUG=1"]
 
+    # --no-exit requires a tty
+    wants_interactive = args.no_exit
+
     # action-specific
     match args.action:
         case 'build':
@@ -230,8 +233,10 @@ def container(args):
             docker_args += ["-e", "COMMAND=%s" % ' '.join(args.command)]
 
         case 'shell':
-            # no argument
-            pass
+            wants_interactive = True
+
+    if wants_interactive:
+        docker_args += ["--interactive", "--tty"]
 
     # exec "docker run"
     docker_args += [f"{CONTAINER_PREFIX}:{args.container_version}",
