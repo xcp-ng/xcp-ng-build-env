@@ -110,6 +110,10 @@ case "$PLATFORM" in
         ;;
 esac
 
+if [ "$RUNNER" = "podman" ]; then
+    EXTRA_ARGS+=("--security-opt" "label=disable")
+fi
+
 "$RUNNER" build \
     --platform "$PLATFORM" \
     -t ghcr.io/xcp-ng/xcp-ng-build-env:${1} \
