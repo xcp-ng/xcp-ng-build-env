@@ -20,12 +20,14 @@ usage() {
 Usage: $SELF_NAME [--platform PF] <version>
 ... where <version> is a 'x.y' version such as 8.0.
 
---platform      override the default platform for the build container.
+--platform  override the default platform for the build container.
+--overlay-cache
 --add-repo NICK:DIR
-                add specified directory as a repo
---overlay-cache use the image cache instead of rebuilding from scratch.
---bootstrap     generate a bootstrap image, needed to build xcp-ng-release.
---isarpm        (internal) generate an image suitable for the ISARPM build system.
+            add specified directory as a repo
+--overlay-cache
+            let image builder use its cache for image overlays (don't force --no-cache)
+--bootstrap generate a bootstrap image, needed to build xcp-ng-release.
+--isarpm    (internal) generate an image suitable for the ISARPM build system.
 EOF
 }
 
