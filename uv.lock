@@ -193,6 +193,15 @@ wheels = [
 ]
 
 [[package]]
+name = "rpm"
+version = "0.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/bd/ce/8db44d2b8fd6713a59e391d12b6816854b7bee8121ae7370c2d565de4265/rpm-0.4.0.tar.gz", hash = "sha256:79adbefa82318e2625d6e4fa16666cf88543498a1f2c10dc3879165d1dc3ecee", size = 11237, upload-time = "2025-04-08T08:57:26.261Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/17/96/0f4e9ba318c6e09b76357ee88d6c73101f8799f8ed707cfdc1df131b4234/rpm-0.4.0-py3-none-any.whl", hash = "sha256:0ef697cb5fb73bf9300a13d423529d7ec215239bf95c5ecb145e6610645f6067", size = 5151, upload-time = "2025-04-08T08:57:24.971Z" },
+]
+
+[[package]]
 name = "ruff"
 version = "0.12.12"
 source = { registry = "https://pypi.org/simple" }
@@ -219,6 +228,18 @@ wheels = [
 ]
 
 [[package]]
+name = "specfile"
+version = "0.37.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "rpm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/74/70/747e24b20dd0ece7abe217b1531475bbcf72ad170e8882509301351720a5/specfile-0.37.0.tar.gz", hash = "sha256:cb0676c3e35776554e2577eeddc5b19e44bb98cafb90b099513def6ab9beb16b", size = 113318, upload-time = "2025-09-05T11:35:56.997Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/96/93/09ffda2182a4777b687a4f316b91b48f5be5ad43611cbfbc7ee03dc7a99c/specfile-0.37.0-py3-none-any.whl", hash = "sha256:86b7d95cef1e042f77134dfeb1ae6bdef07220887af5db92684c7589799cc456", size = 67471, upload-time = "2025-09-05T11:35:55.48Z" },
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.15.0"
 source = { registry = "https://pypi.org/simple" }
@@ -232,6 +253,7 @@ name = "xcp-ng-dev"
 source = { editable = "." }
 dependencies = [
     { name = "argcomplete" },
+    { name = "specfile" },
 ]
 
 [package.dev-dependencies]
@@ -246,7 +268,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "argcomplete" }]
+requires-dist = [
+    { name = "argcomplete" },
+    { name = "specfile" },
+]
 
 [package.metadata.requires-dev]
 dev = [
