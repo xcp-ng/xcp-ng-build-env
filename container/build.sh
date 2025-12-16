@@ -20,16 +20,18 @@ usage() {
 Usage: $SELF_NAME [--platform PF] <version>
 ... where <version> is a 'x.y' version such as 8.0.
 
---platform      override the default platform for the build container.
+--platform  override the default platform for the build container.
+--overlay-cache
 --add-repo NICK:URL
                 add specified directory or URL as a repo.
                 Note: Local folders can only be passed using podman, because
                       docker doesn't support bind mount. Remote URLs can be
                       used with both docker and podman.
---overlay-cache use the image cache instead of rebuilding from scratch.
+--overlay-cache
+            let image builder use its cache for image overlays (don't force --no-cache)
 --variant <bootstrap|isarpm>
-                "bootstrap" generates a bootstrap image, needed to build xcp-ng-release.
-                "isarpm" (internal) generates an image suitable for the ISARPM build system.
+            "bootstrap" generates a bootstrap image, needed to build xcp-ng-release.
+            "isarpm" (internal) generates an image suitable for the ISARPM build system.
 EOF
 }
 
