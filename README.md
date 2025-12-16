@@ -95,6 +95,21 @@ Usage: ./container/build.sh [--platform PF] <version>
 ... where <version> is a 'x.y' version such as 8.0.
 ```
 
+## Adding custom files
+
+In some cases, you may want to include additional files in the build
+environment - for example, a custom repository configuration.
+
+Suppose you have `/tmp/xcpng-users.repo` and you want it to be available
+as a YUM repository in the container. You can do this by adding the
+following line to your Dockerfile:
+```
+COPY /tmp/xcpng-users.repo /etc/yum.repos.d/
+```
+
+This approach is useful when you want to enable extra repositories during
+the build or runtime, especially when using `run.py` to manage repositories.
+
 ## Using the container
 
 Use `xcp-ng-dev`. It accepts a variety of parameters allowing for different uses:
