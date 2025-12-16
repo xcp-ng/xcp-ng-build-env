@@ -25,6 +25,8 @@ EOF
 }
 
 PLATFORM=
+EXTRA_ARGS=()
+OVERLAY_CACHE=0
 while [ $# -ge 1 ]; do
     case "$1" in
         --help|-h)
@@ -35,6 +37,9 @@ while [ $# -ge 1 ]; do
             [ $# -ge 2 ] || die_usage "$1 needs an argument"
             PLATFORM="$2"
             shift
+            ;;
+        --overlay-cache)
+            OVERLAY_CACHE=1
             ;;
         -*)
             die_usage "unknown flag '$1'"
@@ -47,6 +52,10 @@ while [ $# -ge 1 ]; do
 done
 
 [ -n "$1" ] || die_usage "version parameter missing"
+
+if [ $OVERLAY_CACHE = 0 ]; then
+    EXTRA_ARGS+=(--no-cache)
+fi
 
 RUNNER=""
 if [ -n "$XCPNG_OCI_RUNNER" ]; then
@@ -90,4 +99,5 @@ esac
     -t ghcr.io/xcp-ng/xcp-ng-build-env:${1} \
     --build-arg XCP_NG_BRANCH=${1} \
     --ulimit nofile=1024 \
+    "${EXTRA_ARGS[@]}" \
     -f $DOCKERFILE .
