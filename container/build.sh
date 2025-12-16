@@ -21,6 +21,8 @@ Usage: $SELF_NAME [--platform PF] <version>
 ... where <version> is a 'x.y' version such as 8.0.
 
 --platform   override the default platform for the build container.
+--overlay-cache
+             let image builder use its cache for image overlays (don't force --no-cache)
 --add-repo NICK:DIR
              add specified directory as a repo
 --bootstrap  generate a bootstrap image, needed to build xcp-ng-release.
