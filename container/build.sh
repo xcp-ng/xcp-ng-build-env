@@ -26,7 +26,8 @@ Usage: $SELF_NAME [--platform PF] <version>
                 Note: Local folders can only be passed using podman, because
                       docker doesn't support bind mount. Remote URLs can be
                       used with both docker and podman.
---overlay-cache use the image cache instead of rebuilding from scratch.
+--overlay-cache use the builder image cache for image overlays instead of
+                rebuilding from scratch (don't force --no-cache).
 EOF
 }
 
