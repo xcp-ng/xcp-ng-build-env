@@ -14,7 +14,7 @@ jobs:
     permissions:
       packages: write # Required to push packages to GHCR
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           persist-credentials: false
       - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
@@ -44,7 +44,7 @@ jobs:
     permissions:
       packages: write # Required to push packages to GHCR
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           persist-credentials: false
       - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
@@ -74,7 +74,7 @@ jobs:
   #   permissions:
   #     packages: write # Required to push packages to GHCR
   #   steps:
-  #     - uses: actions/checkout@v4
+  #     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
   #       with:
   #         persist-credentials: false
   #     - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
