@@ -10,6 +10,9 @@ COPY    files/xcp-ng-8.99.repo /etc/yum.repos.d/xcp-ng.repo
 # Almalinux 10 devel
 COPY    files/Alma10-devel.repo /etc/yum.repos.d/
 
+ARG     RPMARCH=unspecified
+RUN     sed -i -e "s/@RPMARCH@/${RPMARCH}/g" /etc/yum.repos.d/*.repo
+
 # Install GPG key
 RUN     curl -sSf https://xcp-ng.org/RPM-GPG-KEY-xcpng -o /etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 
