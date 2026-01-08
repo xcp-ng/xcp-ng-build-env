@@ -1,6 +1,6 @@
 [xcpng]
 name=XCP-ng 8.99 test
-baseurl=http://repos/repos/ydi/v9alma10v2/
+baseurl=https://repo.vates.tech/xcp-ng/9/8.99/base/@RPMARCH@/
 enabled=1
 gpgcheck=0
 metadata_expire=0

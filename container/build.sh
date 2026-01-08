@@ -94,10 +94,27 @@ case "$1" in
         ;;
 esac
 
+case "$PLATFORM" in
+    linux/amd64)
+        RPMARCH=x86_64
+        ;;
+    linux/amd64/v2)
+        RPMARCH=x86_64_v2
+        ;;
+    linux/aarch64)
+        RPMARCH=aarch64
+        ;;
+    *)
+        echo >&2 "Unsupported platform '$PLATFORM'"
+        exit 1
+        ;;
+esac
+
 "$RUNNER" build \
     --platform "$PLATFORM" \
     -t ghcr.io/xcp-ng/xcp-ng-build-env:${1} \
     --build-arg XCP_NG_BRANCH=${1} \
+    --build-arg RPMARCH="$RPMARCH" \
     --ulimit nofile=1024 \
     "${EXTRA_ARGS[@]}" \
     -f $DOCKERFILE .
