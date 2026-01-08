@@ -1,12 +1,16 @@
 # WARNING: when bumping the release, bump the releasever together below
 FROM    ghcr.io/almalinux/10-base:10.0
 
+ARG     VARIANT=build
+
 # pin Almalinux version to avoid upgrade to 10.1+
 RUN     mkdir -p /etc/dnf/vars && echo "10.0" > /etc/dnf/vars/releasever
 
 # Add our repositories
 # temporary bootstrap repository
+# FIXME: if [ ${VARIANT} = build ]
 COPY    files/xcp-ng-8.99.repo /etc/yum.repos.d/xcp-ng.repo
+
 # Almalinux 10 devel
 COPY    files/Alma10-devel.repo /etc/yum.repos.d/
 
@@ -15,6 +19,11 @@ RUN     sed -i -e "s/@RPMARCH@/${RPMARCH}/g" /etc/yum.repos.d/*.repo
 
 # Install GPG key
 RUN     curl -sSf https://xcp-ng.org/RPM-GPG-KEY-xcpng -o /etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
+
+# dnf config-manager not available yet?
+RUN     if [ ${VARIANT} != build ]; then \
+            sed -i -e 's/^enabled=1$/enabled=0/' /etc/yum.repos.d/xcp-ng.repo; \
+        fi
 
 # Update
 RUN     dnf update -y \
@@ -40,11 +49,12 @@ RUN     dnf update -y \
             vim \
             wget \
             which \
-        # -release*, to be commented out to boostrap the build-env until it gets built
         # FIXME: isn't it already pulled as almalinux-release when available?
-        && dnf install -y \
+        && if [ ${VARIANT} != bootstrap ]; then \
+            dnf install -y \
             xcp-ng-release \
-            xcp-ng-release-presets \
+            xcp-ng-release-presets; \
+        fi \
         # clean package cache to avoid download errors
         && yum clean all
 
