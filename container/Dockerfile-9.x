@@ -15,7 +15,7 @@ COPY    files/xcp-ng-8.99.repo /etc/yum.repos.d/xcp-ng.repo
 COPY    files/Alma10-devel.repo /etc/yum.repos.d/
 
 ARG     RPMARCH=unspecified
-RUN     sed -i -e "s/@RPMARCH@/${RPMARCH}/g" /etc/yum.repos.d/*.repo
+RUN     grep -l "@RPMARCH@" /etc/yum.repos.d/*.repo | xargs sed -i -e "s/@RPMARCH@/${RPMARCH}/g"
 
 # Install GPG key
 RUN     curl -sSf https://xcp-ng.org/RPM-GPG-KEY-xcpng -o /etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
