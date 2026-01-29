@@ -1,5 +1,5 @@
 # WARNING: when bumping the release, bump the releasever together below
-FROM    ghcr.io/almalinux/10-base:10.0
+FROM    ghcr.io/almalinux/10-minimal:10.0
 
 ARG     VARIANT=build
 
@@ -24,6 +24,29 @@ RUN     curl -sSf https://xcp-ng.org/RPM-GPG-KEY-xcpng -o /etc/pki/rpm-gpg/RPM-G
 RUN     if [ ${VARIANT} != build ]; then \
             sed -i -e 's/^enabled=1$/enabled=0/' /etc/yum.repos.d/xcp-ng.repo; \
         fi
+
+RUN     microdnf -y install dnf
+RUN     dnf --setopt=install_weak_deps=False swap -y coreutils-single @core
+RUN     dnf remove -y \
+        crypto-policies-scripts \
+        iwlwifi-dvm-firmware \
+        iwlwifi-mvm-firmware \
+        kexec-tools \
+        xfsprogs
+
+# things that we don't want installed in the build-env, because they
+# are not in the default install, and that prevents detection of them
+# being dependencies of other packages (should not be necessary with
+# dnf-bridge)
+RUN     dnf remove -y \
+        amd-gpu-firmware \
+        hwdata \
+        initscripts-rename-device \
+        intel-gpu-firmware \
+        iproute \
+        linux-firmware \
+        linux-firmware-whence \
+        pciutils-libs
 
 # Update
 RUN     dnf update -y
