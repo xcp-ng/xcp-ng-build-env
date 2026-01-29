@@ -1,5 +1,5 @@
 # WARNING: when bumping the release, bump the releasever together below
-FROM    ghcr.io/almalinux/10-base:10.0
+FROM    ghcr.io/almalinux/10-minimal:10.0
 
 ARG     VARIANT=build
 
@@ -24,6 +24,10 @@ RUN     curl -sSf https://xcp-ng.org/RPM-GPG-KEY-xcpng -o /etc/pki/rpm-gpg/RPM-G
 RUN     if [ ${VARIANT} != build ]; then \
             sed -i -e 's/^enabled=1$/enabled=0/' /etc/yum.repos.d/xcp-ng.repo; \
         fi
+
+RUN     microdnf -y install dnf
+RUN     dnf swap -y coreutils-single @core
+RUN     dnf remove -y kexec-tools crypto-policies-scripts xfsprogs
 
 # Update
 RUN     dnf update -y
