@@ -27,7 +27,22 @@ RUN     if [ ${VARIANT} != build ]; then \
 
 RUN     microdnf -y install dnf
 RUN     dnf --setopt=install_weak_deps=False swap -y coreutils-single @core
-RUN     dnf remove -y kexec-tools crypto-policies-scripts xfsprogs
+RUN     dnf remove -y \
+        crypto-policies-scripts \
+        iwlwifi-dvm-firmware \
+        iwlwifi-mvm-firmware \
+        kexec-tools \
+        xfsprogs
+
+# things that we don't want installed in the build-env, because they
+# are not in the default install, and that prevents detection of them
+# being dependencies of other packages (should not be necessary with
+# dnf-bridge)
+RUN     dnf remove -y \
+        amd-gpu-firmware \
+        intel-gpu-firmware \
+        iproute \
+        linux-firmware
 
 # Update
 RUN     dnf update -y
