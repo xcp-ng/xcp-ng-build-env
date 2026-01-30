@@ -26,7 +26,7 @@ RUN     if [ ${VARIANT} != build ]; then \
         fi
 
 RUN     microdnf -y install dnf
-RUN     dnf swap -y coreutils-single @core
+RUN     dnf --setopt=install_weak_deps=False swap -y coreutils-single @core
 RUN     dnf remove -y kexec-tools crypto-policies-scripts xfsprogs
 
 # Update
