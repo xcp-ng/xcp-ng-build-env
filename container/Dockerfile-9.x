@@ -40,9 +40,13 @@ RUN     dnf remove -y \
 # dnf-bridge)
 RUN     dnf remove -y \
         amd-gpu-firmware \
+        hwdata \
+        initscripts-rename-device \
         intel-gpu-firmware \
         iproute \
-        linux-firmware
+        linux-firmware \
+        linux-firmware-whence \
+        pciutils-libs
 
 # Update
 RUN     dnf update -y
