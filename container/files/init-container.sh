@@ -82,7 +82,9 @@ if [ -n "$BUILD_LOCAL" ]; then
         else
             specs=$(ls SPECS/*.spec 2>/dev/null)
             # SOURCES/ and SPECS/ are still the default in Alma10
-            SPECFLAGS=()
+            SPECFLAGS=(
+		--define "_sourcedir $PWD/SOURCES/"
+	    )
         fi
         echo "Found specfiles $specs"
 
