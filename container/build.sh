@@ -21,6 +21,7 @@ Usage: $SELF_NAME [--platform PF] <version>
 ... where <version> is a 'x.y' version such as 8.0.
 
 --platform override the default platform for the build container.
+--overlay-cache use the image cache instead of rebuilding from scratch.
 EOF
 }
 
