@@ -36,6 +36,20 @@ def is_podman(runner):
         return True
     return subprocess.getoutput(f"{runner} --version").startswith("podman ")
 
+def get_local_image_platform(runner, image):
+    """Return the platform string (e.g. 'linux/amd64') of a local image, or None."""
+    try:
+        result = subprocess.run(
+            [runner, "image", "inspect", image,
+             "--format", "{{.Os}}/{{.Architecture}}"],
+            capture_output=True, text=True,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except Exception:
+        pass
+    return None
+
 def add_common_args(parser):
     group = parser.add_argument_group("common arguments")
     group.add_argument('-n', '--no-exit', action='store_true',
@@ -74,6 +88,11 @@ def add_container_args(parser):
     group.add_argument('--platform', action='store',
                        help="Override the default platform for the build container. "
                        "Can notably be used to workaround podman bug #6185 fixed in v5.5.1.")
+    group.add_argument('--pull', action='store',
+                       choices=['always', 'missing', 'never', 'newer'],
+                       help="Image pull policy. By default, 'never' is used when the image "
+                       "exists locally (e.g. after a local build), and 'missing' otherwise. "
+                       "Use 'always' to force pulling from the registry.")
     group.add_argument('--debug', action='store_true',
                        help='Enable script tracing in container initialization (sh -x)')
 
@@ -206,7 +225,16 @@ def container(args):
     docker_arch = args.platform or ("linux/amd64/v2"
                                     if args.container_version == "9.0"
                                     else "linux/amd64")
+
+    image_name = f"{CONTAINER_PREFIX}:{args.container_version}"
+    if args.pull is not None:
+        pull_policy = args.pull
+    elif get_local_image_platform(RUNNER, image_name) == docker_arch:
+        pull_policy = "never"
+    else:
+        pull_policy = "always"
     docker_args += ["--platform", docker_arch]
+    docker_args += ["--pull", pull_policy]
 
     if args.debug:
         docker_args += ["-e", "SCRIPT_DEBUG=1"]
