@@ -1,5 +1,11 @@
-[alma10-devel]
+[devel]
 name=Almalinux 10 devel
 baseurl=https://vault.almalinux.org/10.0/devel/@RPMARCH@/os/
 enabled=1
+gpgcheck=1
+
+[devel-source]
+name=Almalinux 10 devel - Source
+baseurl=https://vault.almalinux.org/10.0/devel/Source/
+enabled=0
 gpgcheck=1
