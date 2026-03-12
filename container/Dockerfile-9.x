@@ -90,8 +90,7 @@ RUN     yum clean all
 # FIXME: isn't it already pulled as almalinux-release when available?
 RUN     if [ ${VARIANT} != bootstrap ]; then \
             dnf install -y \
-            xcp-ng-release \
-            xcp-ng-release-presets; \
+            xcp-ng-release; \
         fi
 
 # enable repositories commonly required to build
