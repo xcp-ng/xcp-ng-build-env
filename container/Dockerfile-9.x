@@ -92,8 +92,7 @@ RUN     yum clean all
 # -release*, to be commented out to boostrap the build-env until it gets built
 # FIXME: isn't it already pulled as almalinux-release when available?
 RUN     dnf install -y \
-            xcp-ng-release \
-            xcp-ng-release-presets
+            xcp-ng-release
 
 # enable repositories commonly required to build
 RUN     dnf config-manager --enable crb
