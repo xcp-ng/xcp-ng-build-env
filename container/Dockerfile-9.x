@@ -97,8 +97,7 @@ RUN     yum clean all
 # Not auto-pulled via obsoletes: almalinux-release updates faster than xcp-ng-release tracks it
 RUN     if [ ${VARIANT} != bootstrap ]; then \
             dnf install -y \
-            xcp-ng-release \
-            xcp-ng-release-presets; \
+            xcp-ng-release; \
         fi
 
 # enable repositories commonly required to build
