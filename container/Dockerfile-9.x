@@ -88,5 +88,9 @@ COPY    files/entrypoint.sh /usr/local/bin/entrypoint.sh
 # FIXME: check it we really need any of this
 # COPY    --chown=builder:builder files/rpmmacros /home/builder/.rpmmacros
 
+# Since Alma10-devel is a moving target, now point to alma10_1 and create version conflict for openssl
+RUN dnf config-manager --disable alma10-devel && \
+    dnf downgrade openssl-fips-provider openssl-libs openssl --allowerasing -y
+
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["bash"]
