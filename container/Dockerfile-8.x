@@ -63,5 +63,7 @@ COPY    files/init-container.sh /usr/local/bin/init-container.sh
 COPY    files/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY    --chown=builder:builder files/rpmmacros /home/builder/.rpmmacros
 
+WORKDIR /build
+
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["bash"]
