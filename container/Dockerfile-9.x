@@ -14,6 +14,15 @@ COPY    files/xcp-ng-8.99.repo /etc/yum.repos.d/xcp-ng.repo
 # Almalinux 10 devel
 COPY    files/Alma10-devel.repo /etc/yum.repos.d/
 
+# local xcpsign repo
+COPY local-repo /opt/local-repo 
+
+RUN echo "[local-repo]" > /etc/yum.repos.d/local.repo && \
+    echo "name=Local Repo" >> /etc/yum.repos.d/local.repo && \
+    echo "baseurl=file:///opt/local-repo" >> /etc/yum.repos.d/local.repo && \
+    echo "enabled=1" >> /etc/yum.repos.d/local.repo && \
+    echo "gpgcheck=0" >> /etc/yum.repos.d/local.repo
+
 # Install GPG key
 RUN     curl -sSf https://xcp-ng.org/RPM-GPG-KEY-xcpng -o /etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 
@@ -37,7 +46,9 @@ RUN     dnf install -y \
             python3-rpm \
             sudo \
             dnf-plugins-core \
-            epel-release
+            epel-release \
+            sbsigntools \
+            xcpsign-macros
 
 # HACK make sure we are not pointed to one of the RSYNC mirrors, which curl does not support
 RUN    sed -i.orig \
@@ -73,6 +84,9 @@ RUN     dnf config-manager --enable crb
 
 # workaround sudo not working (e.g. in podman 4.9.3 in Ubuntu 24.04)
 RUN     chmod 0400 /etc/shadow
+
+# workaround perm issue xcpsign-macros
+RUN	chmod 777 /etc/xcpsign/keys
 
 # create the builder user
 RUN     groupadd -g 1000 builder \
