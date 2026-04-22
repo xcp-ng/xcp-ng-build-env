@@ -127,6 +127,7 @@ if [ -n "$BUILD_LOCAL" ]; then
             if [ -n "$RPMBUILD_DEFINE" ]; then
                 RPMBUILDFLAGS+=(--define "$RPMBUILD_DEFINE")
             fi
+            export GIT_CEILING_DIRECTORIES=$PWD/BUILD
             rpmbuild "${RPMBUILDFLAGS[@]}"
             if [ $? == 0 -a -d ~/output/ ]; then
                 cp -rf RPMS SRPMS ~/output/
