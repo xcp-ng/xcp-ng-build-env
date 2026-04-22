@@ -22,15 +22,20 @@ CONTAINER_PREFIX = "ghcr.io/xcp-ng/xcp-ng-build-env"
 DEFAULT_ULIMIT_NOFILE = 2048
 RPMBUILD_STAGES = "abpfcilsrd"  # valid X values in `rpmbuild -bX`
 
-RUNNER = os.getenv("XCPNG_OCI_RUNNER")
-if RUNNER is None:
-    SUPPORTED_RUNNERS = "docker podman"
-    for command in SUPPORTED_RUNNERS.split():
-        if shutil.which(command):
-            RUNNER = command
-            break
-    else:
-        raise Exception(f"cannot find a supported runner: {SUPPORTED_RUNNERS}")
+SUPPORTED_RUNNERS = ["docker", "podman"]
+
+RUNNERS_HELP = ' / '.join(SUPPORTED_RUNNERS)
+
+def get_runner():
+    RUNNER = os.getenv("XCPNG_OCI_RUNNER")
+    if RUNNER is None:
+        for command in SUPPORTED_RUNNERS:
+            if shutil.which(command):
+                RUNNER = command
+                break
+        else:
+            raise Exception(f"cannot find a supported runner: {SUPPORTED_RUNNERS}")
+    return RUNNER
 
 def is_podman(runner):
     if os.path.basename(runner) == "podman":
@@ -78,9 +83,6 @@ def add_common_args(parser):
     group.add_argument('-d', '--dir', action='append',
                        help='Local dir to mount in the '
                        'image. Will be mounted at /external/<dirname>')
-    group.add_argument('-e', '--env', action='append',
-                       help='Environment variables passed directly to '
-                       f'{RUNNER} -e')
     group.add_argument('-a', '--enablerepo',
                        help='additional repositories to enable before installing build dependencies. '
                        'Same syntax as yum\'s --enablerepo parameter. Available additional repositories: '
@@ -95,17 +97,20 @@ def add_common_args(parser):
 
 def add_container_args(parser):
     group = parser.add_argument_group("container arguments")
+    group.add_argument('-e', '--env', action='append',
+                       help='Environment variables passed directly to '
+                       f'{RUNNERS_HELP} -e')
     group.add_argument('container_version',
                        help='The version of XCP-ng container to for the build. For example, 8.3.')
     group.add_argument('-v', '--volume', action='append',
-                       help=f'Volume mounts passed directly to {RUNNER} -v')
+                       help=f'Volume mounts passed directly to {RUNNERS_HELP} -v')
     group.add_argument('--no-rm', action='store_true',
                        help='Do not destroy the container on exit')
     group.add_argument('--syslog', action='store_true',
                        help='Enable syslog to host by mounting in /dev/log')
     group.add_argument('--name', help='Assign a name to the container')
     group.add_argument('--ulimit', action='append',
-                       help=f'Ulimit options passed directly to {RUNNER} run')
+                       help=f'Ulimit options passed directly to {RUNNERS_HELP} run')
     group.add_argument('--platform', action='store',
                        help="Override the default platform for the build container. "
                        "Can notably be used to workaround podman bug #6185 fixed in v5.5.1.")
@@ -131,60 +136,61 @@ def buildparser():
         dest='action', required=True,
         help="Actions available for developing packages")
 
-    # build -- build an rpm using a container
-    parser_build = subparsers_container.add_parser(
+    # container build -- build an rpm using a container
+    parser_container_build = subparsers_container.add_parser(
         'build',
         help="Install dependencies for the spec file(s) found in the SPECS/ subdirectory "
              "of the directory passed as parameter, then build the RPM(s). "
              "Built RPMs and SRPMs will be in RPMS/ and SRPMS/ subdirectories. "
              "Any preexisting BUILD, BUILDROOT, RPMS or SRPMS directories will be removed first.")
-    add_common_args(parser_build)
-    add_container_args(parser_build)
-    group_build = parser_build.add_argument_group("build arguments")
-    group_build.add_argument(
+    add_common_args(parser_container_build)
+    add_container_args(parser_container_build)
+    group_container_build = parser_container_build.add_argument_group("build arguments")
+    group_container_build.add_argument(
         'source_dir', nargs='?', default='.',
         help="Root path where SPECS/ and SOURCES are available. "
              "The default is the working directory")
-    group_build.add_argument(
+    group_container_build.add_argument(
         '--define',
         help="Definitions to be passed to rpmbuild. Example: --define "
              "'xcp_ng_section extras', for building the 'extras' "
              "version of a package which exists in both 'base' and 'extras' versions.")
-    group_build.add_argument(
+    group_container_build.add_argument(
         '-o', '--output-dir',
         help="Directory where the RPMs, SRPMs and the build logs will appear. "
              "The directory is created if it doesn't exist")
-    group_build.add_argument(
+    group_container_build.add_argument(
         '--rpmbuild-opts', action='append',
         help="Pass additional option(s) to rpmbuild")
-    group_build.add_argument(
+    group_container_build.add_argument(
         '--rpmbuild-stage', action='store',
         help=f"Request given -bX stage rpmbuild, X in [{RPMBUILD_STAGES}]")
 
-    # run -- execute commands inside a container
-    parser_run = subparsers_container.add_parser(
+    # container run -- execute commands inside a container
+    parser_container_run = subparsers_container.add_parser(
         'run',
         help='Execute a command inside a container')
-    add_common_args(parser_run)
-    add_container_args(parser_run)
-    group_run = parser_run.add_argument_group("run arguments")
-    group_run.add_argument(
+    add_common_args(parser_container_run)
+    add_container_args(parser_container_run)
+    group_container_run = parser_container_run.add_argument_group("run arguments")
+    group_container_run.add_argument(
         'command', nargs='*',
         help='Command with arguments to run inside the container, '
              'if the command has arguments that start with --, '
              'separate the arguments for this tool and the command with " -- ".')
 
-    # shell -- like run bash
-    parser_shell = subparsers_container.add_parser(
+    # container shell -- like run bash
+    parser_container_shell = subparsers_container.add_parser(
         'shell',
         help='Drop a shell into the prepared container')
-    add_common_args(parser_shell)
-    add_container_args(parser_shell)
-    parser_run.add_argument_group("shell arguments")
+    add_common_args(parser_container_shell)
+    add_container_args(parser_container_shell)
+    parser_container_run.add_argument_group("shell arguments")
 
     return parser
 
 def container(args):
+    RUNNER = get_runner()
     docker_args = [RUNNER, "run"]
 
     if is_podman(RUNNER):

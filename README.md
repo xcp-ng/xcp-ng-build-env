@@ -147,7 +147,7 @@ Note: unfortunately `rpmbuild` (in 8.3 at least) does not add all
 patches in `patches/series` upfront, so in case of real conflict this
 has to be redone from step 2 each time.
 
-## Building packages manually
+### Building packages manually
 
 If you need to build packages manually, here are some useful commands
 
@@ -173,7 +173,7 @@ cd xen-api
 make
 ```
 
-## Mounting external directories into the container
+### Mounting external directories into the container
 
 If you'd like to develop using the tools on your host and preserve the changes
 to source and revision control but still use the container for building, you
