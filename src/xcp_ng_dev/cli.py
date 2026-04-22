@@ -14,6 +14,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 import argcomplete
 
@@ -122,6 +123,14 @@ def add_container_args(parser):
     group.add_argument('--debug', action='store_true',
                        help='Enable script tracing in container initialization (sh -x)')
 
+def add_mock_args(parser):
+    group = parser.add_argument_group('mock arguments')
+    group.add_argument('koji_tag',
+                       help='The koji tag used for the build. For example, v8.3-incoming')
+    group.add_argument('--recreate', action='store_true',
+                       help='Destroy the existing build root before running the command.')
+    group.add_argument('--spec',
+                       help="SPEC file that defines the package to build.")
 
 def buildparser():
     parser = argparse.ArgumentParser()
@@ -186,6 +195,32 @@ def buildparser():
     add_common_args(parser_container_shell)
     add_container_args(parser_container_shell)
     parser_container_run.add_argument_group("shell arguments")
+
+    # mock-based workflow
+    parser_mock = subparsers_env.add_parser('mock', help="Use mock to build a package")
+    parser_mock.set_defaults(func=mock)
+    subparsers_mock = parser_mock.add_subparsers(
+        dest='action', required=True,
+        help="Actions available for developing packages")
+
+    # mock build
+    parser_mock_build = subparsers_mock.add_parser(
+        'build',
+        help="Creates a build root for the koji tag if it doesn't exist yet, "
+             "installs the needed dependencies in it needed for the packages, "
+             "then builds the RPM(s). Built RPMs and SRPMs will be in the "
+             "RPMS subdirectories.")
+    add_common_args(parser_mock_build)
+    add_mock_args(parser_mock_build)
+    group_mock_build = parser_mock_build.add_argument_group("build arguments")
+    group_mock_build.add_argument(
+        'source_dir', nargs='?', default='.',
+        help="Root path where SPECS/ and SOURCES are available. "
+             "The default is the working directory")
+
+    # TODO: mock run
+
+    # TODO: mock shell
 
     return parser
 
@@ -316,6 +351,76 @@ def container(args):
                     "/usr/local/bin/init-container.sh"]
     print("Launching docker with args %s" % docker_args, file=sys.stderr)
     return subprocess.call(docker_args)
+
+def ensure_commands_available_for_mock_action():
+    missing_commands = []
+    for command in ["mock", "koji"]:
+        if not shutil.which(command):
+            missing_commands += [command]
+
+    if missing_commands != []:
+        raise Exception(f"Cannot run mock because the commands {missing_commands} are not installed")
+
+def ensure_mock_config(koji_tag):
+    arch = "x86_64"
+    build_root = f"xcpng-{koji_tag}-latest-{arch}"
+    config_dir = Path.home() / ".config" / "mock"
+    config_file = config_dir / f"{build_root}.cfg"
+
+    if config_file.is_file():
+        print(f'Using existing mock configuration "{os.fspath(config_file)}"')
+        return build_root
+
+    os.makedirs(config_dir, exist_ok=True)
+    koji_args = ["koji", "mock-config", "--tag", koji_tag, "-a", arch, "-o", os.fspath(config_file)]
+    print(f"Creating mock configuration by running {koji_args}", file=sys.stderr)
+
+    subprocess.call(koji_args)
+
+    return build_root
+
+def specs_in(spec_dir):
+    yield from (f for f in Path(spec_dir).glob('*.spec') if f.is_file())
+
+def mock(args):
+    ensure_commands_available_for_mock_action()
+    build_root = ensure_mock_config(args.koji_tag)
+
+    mock_args = ["mock"]
+
+    common_args = ["-r", build_root, "--no-cleanup-after"]
+
+    if not args.recreate:
+        common_args += ["--no-clean"]
+
+    source_dir = Path(args.source_dir)
+
+    # action-specific
+    match args.action:
+        case 'build':
+            mock_args += ["--rebuild"]
+            mock_args += common_args
+
+            result_dir = source_dir / 'RPMS'
+            os.makedirs(result_dir, exist_ok=True)
+            mock_args += ["--resultdir", os.fspath(result_dir)]
+
+            sources_dir = source_dir / 'SOURCES'
+            mock_args += ["--sources", os.fspath(sources_dir)]
+
+            spec_dir = source_dir / 'SPECS/'
+            if args.spec is None:
+                spec_file = None
+            else:
+                spec_file = Path(args.spec)
+
+            match (spec_file, list(specs_in(spec_dir))):
+                case (None, []):
+                    raise ValueError(f"No spec files found in {spec_dir}, please define one with --spec")
+                case None, [spec, *_] | (spec, _):
+                    mock_args += ["--spec", os.fspath(spec)]
+
+    return subprocess.call(mock_args)
 
 def main():
     """ Main entry point. """
