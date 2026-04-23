@@ -386,6 +386,10 @@ def mock(args):
     ensure_commands_available_for_mock_action()
     build_root = ensure_mock_config(args.koji_tag)
 
+    print('\nNOTICE: The error of "package does not verify" can be fixed by '
+          'running `sudo sh -c \'echo "%_pkgverify_flags 0" >> '
+          '/etc/rpm/macros\'\n')
+
     mock_args = ["mock"]
 
     common_args = ["-r", build_root, "--no-cleanup-after"]
