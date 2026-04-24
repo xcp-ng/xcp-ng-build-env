@@ -53,6 +53,7 @@ RUN     sed -i "/gpgkey/a exclude=ocaml*" /etc/yum.repos.d/Cent* /etc/yum.repos.
 # create the builder user
 RUN     groupadd -g 1000 builder \
         && useradd -u 1000 -g 1000 builder \
+        && gpasswd -a builder tty \
         && echo "builder:builder" | chpasswd \
         && echo "builder ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
 

@@ -239,6 +239,11 @@ def container(args):
     if args.debug:
         docker_args += ["-e", "SCRIPT_DEBUG=1"]
 
+    # Some build systems try to re-open /dev/stderr (->
+    # /dev/pts/0), so make sure pseudo-tty can be attached to
+    # in the build environment.
+    docker_args += ["--tty"]
+
     # --no-exit requires a tty
     wants_interactive = args.no_exit
 
@@ -274,7 +279,7 @@ def container(args):
             wants_interactive = True
 
     if wants_interactive:
-        docker_args += ["--interactive", "--tty"]
+        docker_args += ["--interactive"]
 
     # exec "docker run"
     docker_args += [f"{CONTAINER_PREFIX}:{args.container_version}",
