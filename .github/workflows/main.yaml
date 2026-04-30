@@ -16,6 +16,7 @@ jobs:
         with:
           persist-credentials: true  # required for git lfs
       - uses: ./.github/actions/uv-setup/
+      - run: sudo apt update && sudo apt install -y --no-install-recommends python3-rpm
       - name: Test
         # use script to provide a tty (workaround of systematic "docker -t"?)
         shell: 'script -q -e -c "bash {0}"'
