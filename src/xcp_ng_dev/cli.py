@@ -36,6 +36,26 @@ def is_podman(runner):
         return True
     return subprocess.getoutput(f"{runner} --version").startswith("podman ")
 
+
+def get_timezone() -> str:
+    # Forward the the `TZ` environment variable if provided
+    tz = os.environ.get("TZ")
+    if tz is not None:
+        return tz
+    # Otherwise use `timedatectl` if available, returning the timezone name
+    # (e.g `Europe/Paris`)
+    code, output = subprocess.getstatusoutput("timedatectl show -p Timezone --value")
+    if code == 0:
+        return output
+    # Then fallback to the last line of `/etc/localtime`, returning the timezone configuration
+    # (e.g `CET-1CEST,M3.5.0,M10.5.0/3`)
+    code, output = subprocess.getstatusoutput("tail -n 1 /etc/localtime")
+    if code == 0:
+        return output
+    # Then fallback to `UTC`
+    return "UTC"
+
+
 def get_local_image_platform(runner, image):
     """Return the platform string (e.g. 'linux/amd64') of a local image, or None."""
     try:
@@ -280,6 +300,9 @@ def container(args):
 
     if wants_interactive:
         docker_args += ["--interactive"]
+
+    # Set the timezone of the container so it corresponds to the local machine
+    docker_args += ["-e", f"TZ={get_timezone()}"]
 
     # exec "docker run"
     docker_args += [f"{CONTAINER_PREFIX}:{args.container_version}",
