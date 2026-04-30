@@ -38,7 +38,22 @@ def is_podman(runner):
 
 
 def get_timezone() -> str:
-    return subprocess.getoutput("timedatectl show -p Timezone --value")
+    # Forward the the `TZ` environment variable if provided
+    tz = os.environ.get("TZ")
+    if tz is not None:
+        return tz
+    # Otherwise use `timedatectl` if available, returning the timezone name
+    # (e.g `Europe/Paris`)
+    code, output = subprocess.getstatusoutput("timedatectl show -p Timezone --value")
+    if code == 0:
+        return output
+    # Then fallback to the last line of `/etc/localtime`, returning the timezone configuration
+    # (e.g `CET-1CEST,M3.5.0,M10.5.0/3`)
+    code, output = subprocess.getstatusoutput("tail -n 1 /etc/localtime")
+    if code == 0:
+        return output
+    # Then fallback to `UTC`
+    return "UTC"
 
 
 def get_local_image_platform(runner, image):
