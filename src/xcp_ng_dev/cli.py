@@ -89,6 +89,10 @@ def add_common_args(parser):
                        'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
     group.add_argument('--no-update', action='store_true',
                        help='do not run "yum update" on container start, use it as it was at build time')
+    group.add_argument('--bootstrap', action='store_true',
+                       help='use a bootstrap build-env, able to build xc-ng-release')
+    group.add_argument('--isarpm', action='store_true',
+                       help='(internal) use a build-env suitable for the ISARPM build system')
     group.add_argument('--no-network', action='store_true',
                        help='disable all networking support in the build environment')
 
@@ -304,8 +308,14 @@ def container(args):
     # Set the timezone of the container so it corresponds to the local machine
     docker_args += ["-e", f"TZ={get_timezone()}"]
 
+    tag = args.container_version
+    if args.bootstrap:
+        tag += "-bootstrap"
+    if args.isarpm:
+        tag += "-isarpm"
+
     # exec "docker run"
-    docker_args += [f"{CONTAINER_PREFIX}:{args.container_version}",
+    docker_args += [f"{CONTAINER_PREFIX}:{tag}",
                     "/usr/local/bin/init-container.sh"]
     print("Launching docker with args %s" % docker_args, file=sys.stderr)
     return subprocess.call(docker_args)
