@@ -17,6 +17,10 @@ os_release()
     )
 }
 
+if [ -n "${PATH_PREPEND}" ]; then
+    PATH="${PATH_PREPEND}:${PATH}"
+fi
+
 OS_RELEASE=$(os_release)
 
 # get list of user repos
