@@ -10,6 +10,7 @@ Simplifies the creation of a build environment for XCP-ng packages.
 
 import argparse
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -293,7 +294,7 @@ def container(args):
             print(f"Building directory {build_dir}", file=sys.stderr)
 
         case 'run':
-            docker_args += ["-e", "COMMAND=%s" % ' '.join(args.command)]
+            docker_args += ["-e", f"COMMAND={shlex.join(args.command)}"]
 
         case 'shell':
             wants_interactive = True
