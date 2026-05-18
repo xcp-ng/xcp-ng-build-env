@@ -218,9 +218,19 @@ def buildparser():
         help="Root path where SPECS/ and SOURCES are available. "
              "The default is the working directory")
 
-    # TODO: mock run
+    parser_mock_shell = subparsers_mock.add_parser(
+        'shell',
+        help="Creates a build root for the koji tag if it doesn't exist yet, "
+             "drop the user into a shell within the build root with the "
+             "selected directory mounted.")
+    add_mock_args(parser_mock_shell)
+    group_mock_shell = parser_mock_shell.add_argument_group("shell arguments")
+    group_mock_shell.add_argument(
+        'source_dir', nargs='?', default='.',
+        help="Path that will be mounted in the build root. "
+             "The default is the working directory")
 
-    # TODO: mock shell
+    # TODO: mock run
 
     return parser
 
@@ -382,6 +392,14 @@ def ensure_mock_config(koji_tag):
 def specs_in(spec_dir):
     yield from (f for f in Path(spec_dir).glob('*.spec') if f.is_file())
 
+def mock_install_deps(build_root, spec_file):
+    mock_args = ["mock", "-r", build_root]
+    mock_args += ["--no-clean", "--no-cleanup-after"]
+    mock_args += ["--installdeps", spec_file]
+
+    print(f'Installing dependencies for "{spec_file}"')
+    return subprocess.call(mock_args)
+
 def mock(args):
     ensure_commands_available_for_mock_action()
     build_root = ensure_mock_config(args.koji_tag)
@@ -423,6 +441,23 @@ def mock(args):
                     raise ValueError(f"No spec files found in {spec_dir}, please define one with --spec")
                 case None, [spec, *_] | (spec, _):
                     mock_args += ["--spec", os.fspath(spec)]
+
+        case 'shell':
+            if args.spec is not None:
+                spec_file = Path(args.spec)
+                mock_install_deps(build_root, spec_file)
+
+            root_dir = "/tmp/buildroot"
+
+            mock_args += ["--shell"]
+            mock_args += common_args
+
+            mock_args += ["--cwd", root_dir]
+
+            mock_args += ["--enable-plugin", "bind_mount"]
+
+            mock_args += ["--unpriv",
+                          f'--plugin-option=bind_mount:dirs=[("{Path.absolute(source_dir)}", "{root_dir}")]']
 
     return subprocess.call(mock_args)
 
