@@ -116,7 +116,7 @@ if [ -n "$BUILD_LOCAL" ]; then
         fi
     )
 elif [ -n "$COMMAND" ]; then
-    $COMMAND
+    eval "exec $COMMAND"
 else
     /bin/bash --login || true
 fi
