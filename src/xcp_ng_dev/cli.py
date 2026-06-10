@@ -14,6 +14,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+from itertools import chain
 from pathlib import Path
 
 import argcomplete
@@ -436,11 +437,16 @@ def mock(args):
             else:
                 spec_file = Path(args.spec)
 
-            match (spec_file, list(specs_in(spec_dir))):
-                case (None, []):
-                    raise ValueError(f"No spec files found in {spec_dir}, please define one with --spec")
-                case None, [spec, *_] | (spec, _):
+            spec_candidates = list(chain(specs_in(source_dir), specs_in(spec_dir)))
+            match (spec_file, spec_candidates):
+                case None, [spec] | (spec, _):
                     mock_args += ["--spec", os.fspath(spec)]
+                case (None, []):
+                    raise ValueError(f"No spec files found in {source_dir} or {spec_dir}, please \
+                            define one with --spec")
+                case None, specs:
+                    raise ValueError(f"More than a spec file was found on {source_dir} and {spec_dir}: \
+                            {specs}, please define one with --spec")
 
         case 'shell':
             if args.spec is not None:
