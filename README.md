@@ -147,7 +147,7 @@ Note: unfortunately `rpmbuild` (in 8.3 at least) does not add all
 patches in `patches/series` upfront, so in case of real conflict this
 has to be redone from step 2 each time.
 
-## Building packages manually
+### Building packages manually
 
 If you need to build packages manually, here are some useful commands
 
@@ -173,7 +173,7 @@ cd xen-api
 make
 ```
 
-## Mounting external directories into the container
+### Mounting external directories into the container
 
 If you'd like to develop using the tools on your host and preserve the changes
 to source and revision control but still use the container for building, you
@@ -185,3 +185,41 @@ then I can mount it inside the container as follows:
 ```sh
 xcp-ng-dev container shell -v /work/code:/mnt/repos 8.2
 ```
+
+### Using mock
+
+Mock is the tool used by koji to build packages.
+It uses chroots as the isolation mechanism instead of containers.
+The chrooted environments are called build roots.
+Mock uses koji tags instead of image tags to know how to create a build roots. 
+
+To build packages using mock, run `xcp-ng-dev mock`.
+This command accepts a variety of parameters allowing for different uses:
+* build a package from a directory that follows the rpmbuild convention (a
+  `SOURCES/` directory and a `SPECS/` directory).This is most useful for
+  building packages from XCP-ng's git repositories of RPM sources:
+  https://github.com/xcp-ng-rpms.
+* start a shell in the build environment, with the appropriate CentOS, EPEL and
+  XCP-ng yum repositories enabled.
+
+**Examples**
+
+Build from git (and put the result into RPMS/)
+```sh
+# Find the relevant repository at https://github.com/xcp-ng-rpms/
+# Make sure you have git-lfs installed before cloning.
+# Then... (Example taken: xapi)
+git clone https://github.com/xcp-ng-rpms/xapi.git
+
+# ... Here add your patches ...
+
+# Build.
+xcp-ng-dev mock build v8.3-incoming xapi/
+```
+
+**Important switches**
+
+* `shell` drops you to a shell, ready to run commands in the build environment with the sources loaded.
+* `list` lists the build roots present in the computer, these can be deleted with a simple rm -r
+* `--recreate` deletes the build root before running the command. Helpful to run when the build root has become outdated and building the package fails unexpectedly.
+
