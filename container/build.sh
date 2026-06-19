@@ -20,13 +20,16 @@ usage() {
 Usage: $SELF_NAME [--platform PF] <version>
 ... where <version> is a 'x.y' version such as 8.0.
 
---platform override the default platform for the build container.
+--platform   override the default platform for the build container.
+--bootstrap  generate a bootstrap image, needed to build xcp-ng-release.
+--isarpm     (internal) generate an image suitable for the ISARPM build system.
 EOF
 }
 
 PLATFORM=
 EXTRA_ARGS=()
 OVERLAY_CACHE=0
+VARIANT=build
 while [ $# -ge 1 ]; do
     case "$1" in
         --help|-h)
@@ -40,6 +43,12 @@ while [ $# -ge 1 ]; do
             ;;
         --overlay-cache)
             OVERLAY_CACHE=1
+            ;;
+        --bootstrap)
+            VARIANT=bootstrap
+            ;;
+        --isarpm)
+            VARIANT=isarpm
             ;;
         -*)
             die_usage "unknown flag '$1'"
@@ -56,6 +65,12 @@ done
 if [ $OVERLAY_CACHE = 0 ]; then
     EXTRA_ARGS+=(--no-cache)
 fi
+
+case "$1" in
+    8.*)
+        [ $VARIANT = build ] || die "--variant is only supported for XCP-ng 9.0 and newer"
+        ;;
+esac
 
 RUNNER=""
 if [ -n "$XCPNG_OCI_RUNNER" ]; then
@@ -110,9 +125,26 @@ case "$PLATFORM" in
         ;;
 esac
 
+case $VARIANT in
+    build)
+        TAG=${1}
+        ;;
+    bootstrap)
+        TAG=${1}-bootstrap
+        EXTRA_ARGS+=( "--build-arg" "VARIANT=bootstrap" )
+        ;;
+    isarpm)
+        TAG=${1}-isarpm
+        EXTRA_ARGS+=( "--build-arg" "VARIANT=isarpm" )
+        ;;
+    *)
+        echo >&2 "Unsupported --variant '$VARIANT'"
+        ;;
+esac
+
 "$RUNNER" build \
     --platform "$PLATFORM" \
-    -t ghcr.io/xcp-ng/xcp-ng-build-env:${1} \
+    -t ghcr.io/xcp-ng/xcp-ng-build-env:${TAG} \
     --build-arg XCP_NG_BRANCH=${1} \
     --build-arg RPMARCH="$RPMARCH" \
     --ulimit nofile=1024 \
