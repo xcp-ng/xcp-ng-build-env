@@ -23,7 +23,59 @@ want to use a specific container runtime, set `XCPNG_OCI_RUNNER` to
 the docker-compatible command to use (typically `podman` or `docker`).
 
 You'll need to install git-lfs to be able to download the source tarballs from
-git, otherwise when running xcp-ng-dev, it won't be able to extract the sources.
+git, otherwise when running xcp-ng-dev, it won't be able to extract the
+sources.
+
+## Setting up a development environment with Distrobox
+
+If your Linux distribution does not provide mock (e.g. Debian), you can use
+[Distrobox](https://distrobox.it/) with Podman to run a Fedora-based
+development environment. Distrobox creates an isolated container that does
+not affect your base system, while your home directory is shared between
+the container and the host, giving you seamless access to your files and
+repositories from both sides.
+
+### Building the Distrobox image
+
+From the root of this repository:
+
+```bash
+podman build -t xcp-ng-dev container/distrobox/
+```
+
+### Creating and entering the container
+
+```bash
+distrobox create --name xcp-ng-dev --image xcp-ng-dev
+distrobox enter xcp-ng-dev
+```
+
+### First-time setup inside the container
+
+1. Check if your user is already in the mock group:
+   ```bash
+   groups
+   ```
+   If mock is not listed, add yourself:
+   ```bash
+   sudo usermod -aG mock $USER
+   ```
+   Then exit and re-enter the container, and confirm with:
+   ```bash
+   groups
+   ```
+
+2. Install the `xcp-ng-dev` command as described in the next section,
+   make sure it can be run from within the distrobox container.
+
+3. Clone the repositories you will use to build your RPM packages,
+   typically they willbe under the `xcp-ng-rpms` GitHub organisation.
+   For instance, run this commande from somewhere inside the container
+   to make sure `git-lfs` is available when you clone:
+
+```bash
+git clone git@github.com:xcp-ng-rpms/xapi.git
+```
 
 ## Installation
 
@@ -80,7 +132,7 @@ To install the completion, run `register-python-argcomplete --shell fish xcp-ng-
 
 ## Building the container image(s)
 
-> [!NOTE]  
+> [!NOTE]
 > The images are typically downloaded from ghcr.io for regular usage.
 > Unless you're working on this project, you usually don't need to build the container images yourself.
 
@@ -191,7 +243,7 @@ xcp-ng-dev container shell -v /work/code:/mnt/repos 8.2
 Mock is the tool used by koji to build packages.
 It uses chroots as the isolation mechanism instead of containers.
 The chrooted environments are called build roots.
-Mock uses koji tags instead of image tags to know how to create a build roots. 
+Mock uses koji tags instead of image tags to know how to create a build roots.
 
 To build packages using mock, run `xcp-ng-dev mock`.
 This command accepts a variety of parameters allowing for different uses:
@@ -222,4 +274,3 @@ xcp-ng-dev mock build v8.3-incoming xapi/
 * `shell` drops you to a shell, ready to run commands in the build environment with the sources loaded.
 * `list` lists the build roots present in the computer, these can be deleted with a simple rm -r
 * `--recreate` deletes the build root before running the command. Helpful to run when the build root has become outdated and building the package fails unexpectedly.
-
