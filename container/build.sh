@@ -132,6 +132,16 @@ case "$PLATFORM" in
         ;;
 esac
 
+# non-x86_64 builds get an arch suffix on their tag, so they don't overwrite
+# the x86_64 image that most tooling defaults to
+ARCH_SUFFIX=
+case "$RPMARCH" in
+    aarch64)
+        ARCH_SUFFIX=-aarch64
+        ;;
+esac
+TAG=${1}${ARCH_SUFFIX}
+
 # handle --add-repo
 if [ -n "$REPO" ]; then
     REPONICK=${REPO%%:*}
@@ -178,7 +188,7 @@ fi
 
 "$RUNNER" build \
     --platform "$PLATFORM" \
-    -t ghcr.io/xcp-ng/xcp-ng-build-env:${1} \
+    -t ghcr.io/xcp-ng/xcp-ng-build-env:${TAG} \
     --build-arg XCP_NG_BRANCH=${1} \
     --build-arg RPMARCH="$RPMARCH" \
     --ulimit nofile=1024 \
