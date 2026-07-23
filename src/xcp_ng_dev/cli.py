@@ -343,7 +343,17 @@ def container(args):
     if not docker_arch:
         raise Exception("cannot determine container platform to use")
 
-    image_name = f"{CONTAINER_PREFIX}:{args.container_version}"
+    tag = args.container_version
+    if args.bootstrap:
+        tag += "-bootstrap"
+    if args.isarpm:
+        tag += "-isarpm"
+    if docker_arch == "linux/aarch64":
+        # non-x86_64 images get an arch suffix so they don't overwrite the
+        # x86_64 tag most tooling defaults to (see container/build.sh)
+        tag += "-aarch64"
+
+    image_name = f"{CONTAINER_PREFIX}:{tag}"
     if args.pull is not None:
         pull_policy = args.pull
     elif get_local_image_platform(RUNNER, image_name) == docker_arch:
@@ -403,14 +413,8 @@ def container(args):
     # Set the timezone of the container so it corresponds to the local machine
     docker_args += ["-e", f"TZ={get_timezone()}"]
 
-    tag = args.container_version
-    if args.bootstrap:
-        tag += "-bootstrap"
-    if args.isarpm:
-        tag += "-isarpm"
-
     # exec "docker run"
-    docker_args += [f"{CONTAINER_PREFIX}:{tag}",
+    docker_args += [image_name,
                     "/usr/local/bin/init-container.sh"]
     print("Launching docker with args %s" % docker_args, file=sys.stderr)
     return subprocess.call(docker_args)
