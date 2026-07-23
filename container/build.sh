@@ -24,7 +24,10 @@ Usage: $SELF_NAME [--platform PF] <version>
 --overlay-cache
              let image builder use its cache for image overlays (don't force --no-cache)
 --add-repo NICK:DIR
-             add specified directory as a repo
+             add specified local directory as a repo (podman only, needs
+             bind-mount support in build)
+--add-repo NICK:URL
+             add specified URL as a repo. Works with docker too, no bind-mount needed
 --bootstrap  generate a bootstrap image, needed to build xcp-ng-release.
 --isarpm     (internal) generate an image suitable for the ISARPM build system.
 EOF
@@ -167,22 +170,44 @@ esac
 
 # handle --add-repo
 if [ -n "$REPO" ]; then
-    REPOCONF=$(mktemp)
-    REPONICK=${REPO%:*}
-    REPODIR=${REPO#*:}
-    cat > $REPOCONF <<EOF
+    REPONICK=${REPO%%:*}
+    REPOLOC=${REPO#*:}
+    case "$REPOLOC" in
+        http://*|https://*|ftp://*)
+            REPOCONTENT=$(cat <<EOF
 [$REPONICK]
-name=Local repository - $REPONICK from $REPODIR
+name=Repository - $REPONICK from $REPOLOC
+baseurl=$REPOLOC
+enabled=1
+repo_gpgcheck=0
+gpgcheck=0
+priority=1
+EOF
+            )
+            EXTRA_ARGS+=(
+                "--build-arg" "EXTRA_REPO_NICK=$REPONICK"
+                "--build-arg" "EXTRA_REPO_CONTENT=$(printf '%s' "$REPOCONTENT" | base64 -w0)"
+            )
+            ;;
+        *)
+            # local directory: bind-mount it in (podman only, needs
+            # bind-mount support in build)
+            REPOCONF=$(mktemp)
+            cat > $REPOCONF <<EOF
+[$REPONICK]
+name=Local repository - $REPONICK from $REPOLOC
 baseurl=file:///local-repos/$REPONICK/
 enabled=1
 repo_gpgcheck=0
 gpgcheck=0
 priority=1
 EOF
-    EXTRA_ARGS+=(
-        "-v" "$REPOCONF:/etc/yum.repos.d/$REPONICK.repo:rw"
-        "-v" "$REPODIR:/local-repos/$REPONICK:ro"
-    )
+            EXTRA_ARGS+=(
+                "-v" "$REPOCONF:/etc/yum.repos.d/$REPONICK.repo:rw"
+                "-v" "$REPOLOC:/local-repos/$REPONICK:ro"
+            )
+            ;;
+    esac
 fi
 
 "$RUNNER" build \

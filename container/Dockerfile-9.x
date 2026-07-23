@@ -20,8 +20,18 @@ RUN     grep -l "@RPMARCH@" /etc/yum.repos.d/*.repo | xargs sed -i -e "s/@RPMARC
 # Install GPG key
 RUN     curl -sSf https://xcp-ng.org/RPM-GPG-KEY-xcpng -o /etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 
+# Optionally add an extra repo, e.g. a private aarch64 mirror until aarch64
+# packages are published to xcp-ng.org (see build.sh's --add-repo NICK:URL).
+# Content is base64-encoded to survive as a single build-arg.
+ARG     EXTRA_REPO_NICK=
+ARG     EXTRA_REPO_CONTENT=
+RUN     if [ -n "${EXTRA_REPO_NICK}" ]; then \
+            echo "${EXTRA_REPO_CONTENT}" | base64 -d > /etc/yum.repos.d/${EXTRA_REPO_NICK}.repo; \
+        fi
+
 # dnf config-manager not available yet?
-RUN     if [ ${VARIANT} != build ]; then \
+# Also disable for aarch64: xcp-ng repo has no aarch64 packages yet
+RUN     if [ "${VARIANT}" != build ] || [ "${RPMARCH}" = "aarch64" ]; then \
             sed -i -e 's/^enabled=1$/enabled=0/' /etc/yum.repos.d/xcp-ng.repo; \
         fi
 
