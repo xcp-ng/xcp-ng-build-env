@@ -106,7 +106,8 @@ RUN     groupadd -g 1000 builder \
         && echo "builder ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 RUN     mkdir -p /usr/local/bin
-RUN     curl -fsSL "https://github.com/tianon/gosu/releases/download/1.17/gosu-amd64" -o /usr/local/bin/gosu \
+RUN     GOSU_ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') \
+        && curl -fsSL "https://github.com/tianon/gosu/releases/download/1.17/gosu-${GOSU_ARCH}" -o /usr/local/bin/gosu \
         && chmod +x /usr/local/bin/gosu
 COPY    files/init-container.sh /usr/local/bin/init-container.sh
 COPY    files/entrypoint.sh /usr/local/bin/entrypoint.sh
