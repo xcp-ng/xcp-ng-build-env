@@ -311,6 +311,10 @@ def container(args):
         tag += "-bootstrap"
     if args.isarpm:
         tag += "-isarpm"
+    if docker_arch == "linux/aarch64":
+        # non-x86_64 images get an arch suffix so they don't overwrite the
+        # x86_64 tag most tooling defaults to (see container/build.sh)
+        tag += "-aarch64"
 
     # exec "docker run"
     docker_args += [f"{CONTAINER_PREFIX}:{tag}",

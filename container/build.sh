@@ -151,16 +151,25 @@ if [ "$RUNNER" = "podman" ]; then
     EXTRA_ARGS+=("--security-opt" "label=disable")
 fi
 
+# non-x86_64 builds get an arch suffix on their tag, so they don't overwrite
+# the x86_64 image that most tooling defaults to
+ARCH_SUFFIX=
+case "$RPMARCH" in
+    aarch64)
+        ARCH_SUFFIX=-aarch64
+        ;;
+esac
+
 case $VARIANT in
     build)
-        TAG=${1}
+        TAG=${1}${ARCH_SUFFIX}
         ;;
     bootstrap)
-        TAG=${1}-bootstrap
+        TAG=${1}-bootstrap${ARCH_SUFFIX}
         EXTRA_ARGS+=( "--build-arg" "VARIANT=bootstrap" )
         ;;
     isarpm)
-        TAG=${1}-isarpm
+        TAG=${1}-isarpm${ARCH_SUFFIX}
         EXTRA_ARGS+=( "--build-arg" "VARIANT=isarpm" )
         ;;
     *)
