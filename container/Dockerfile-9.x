@@ -45,8 +45,26 @@ RUN     dnf update -y \
         && dnf install -y \
             xcp-ng-release \
             xcp-ng-release-presets \
+        # Secure Boot signing
+        && dnf install -y \
+            pesign \
+            nss-tools \
+            p11-kit \
         # clean package cache to avoid download errors
         && yum clean all
+
+###############################################################################
+# Siguldry PKCS#11 module
+###############################################################################
+
+COPY files/libsiguldry_pkcs11.so \
+     /usr/lib64/pkcs11/libsiguldry_pkcs11.so
+
+# Register Siguldry pkcs11 module 
+RUN mkdir -p /etc/pkcs11/modules && \
+    printf '%s\n' \
+        "module: /usr/lib64/pkcs11/libsiguldry_pkcs11.so" \
+        > /etc/pkcs11/modules/siguldry.module
 
 # enable repositories commonly required to build
 RUN     dnf config-manager --enable crb
@@ -59,6 +77,9 @@ RUN     groupadd -g 1000 builder \
         && useradd -u 1000 -g 1000 builder \
         && echo "builder:builder" | chpasswd \
         && echo "builder ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+RUN groupadd -g 987 siguldry \
+    && usermod -aG siguldry builder
 
 RUN     mkdir -p /usr/local/bin
 RUN     curl -fsSL "https://github.com/tianon/gosu/releases/download/1.17/gosu-amd64" -o /usr/local/bin/gosu \

@@ -357,6 +357,12 @@ def container(args):
     # Set the timezone of the container so it corresponds to the local machine
     docker_args += ["-e", f"TZ={get_timezone()}"]
 
+    # Mount the Siguldry client-proxy socket, if present on the host, so
+    # pesign inside the container can sign via the Siguldry PKCS#11 module.
+    siguldry_socket = "/run/siguldry-client-proxy/siguldry-client-proxy.socket"
+    if os.path.exists(siguldry_socket):
+        docker_args += ["-v", f"{siguldry_socket}:{siguldry_socket}"]
+
     # exec "docker run"
     docker_args += [f"{CONTAINER_PREFIX}:{args.container_version}",
                     "/usr/local/bin/init-container.sh"]
