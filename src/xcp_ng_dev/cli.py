@@ -78,11 +78,18 @@ def get_local_image_platform(runner, image):
         pass
     return None
 
+def dir_path(path):
+    """Argument type for argparse"""
+    if os.path.isdir(path):
+        return path
+    else:
+        raise argparse.ArgumentTypeError(f"{path} is not a valid directory path")
+
 def add_common_args(parser):
     group = parser.add_argument_group("common arguments")
     group.add_argument('-n', '--no-exit', action='store_true',
                        help='After finishing the execution of the action, drop user into a shell')
-    group.add_argument('-d', '--dir', action='append',
+    group.add_argument('-d', '--dir', action='append', type=dir_path,
                        help='Local dir to mount in the '
                        'image. Will be mounted at /external/<dirname>')
     group.add_argument('-a', '--enablerepo',
@@ -157,7 +164,7 @@ def buildparser():
     add_container_args(parser_container_build)
     group_container_build = parser_container_build.add_argument_group("build arguments")
     group_container_build.add_argument(
-        'source_dir', nargs='?', default='.',
+        'source_dir', nargs='?', type=dir_path, default='.',
         help="Root path where SPECS/ and SOURCES are available. "
              "The default is the working directory")
     group_container_build.add_argument(
