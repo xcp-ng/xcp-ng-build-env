@@ -1,0 +1,20 @@
+# Build environment for XCP-ng development based on Fedora.
+# See the "Setting up a development environment with Distrobox" section
+# in README.md for usage instructions.
+
+FROM fedora:latest
+
+# Update the system
+RUN dnf update -y
+
+# Install required packages
+RUN dnf install -y \
+    mock \
+    git \
+    git-lfs \
+    pipx \
+    koji \
+    file
+
+# Fix RPM digest verification issues with EL7 packages
+RUN sh -c 'echo "%_pkgverify_flags 0" >> /etc/rpm/macros'
