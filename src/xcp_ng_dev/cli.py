@@ -99,6 +99,7 @@ def add_common_args(parser):
     group.add_argument('--disablerepo',
                        help='disable repositories. Same syntax as yum\'s --disablerepo parameter. '
                        'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
+    group.add_argument('-U', '--enable-upstream-repos', action='store_true', help='enable the upstream repositories')
     group.add_argument('--no-update', action='store_true',
                        help='do not run "yum update" on container start, use it as it was at build time')
     group.add_argument('--no-network', action='store_true',
@@ -270,6 +271,8 @@ def container(args):
     if args.env:
         for env in args.env:
             docker_args += ["-e", env]
+    if args.enable_upstream_repos:
+        docker_args += ["-e", "ENABLE_UPSTREAM_REPOS=true"]
     if args.enablerepo:
         docker_args += ["-e", "ENABLEREPO=%s" % args.enablerepo]
     if args.disablerepo:

@@ -4,7 +4,7 @@ baseurl=http://vault.centos.org/@CENTOS_VERSION@/os/$basearch/
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 exclude=ocaml*
-enabled=1
+enabled=0
 
 [C@CENTOS_VERSION@-updates]
 name=CentOS-@CENTOS_VERSION@ - Updates
@@ -12,7 +12,7 @@ baseurl=http://vault.centos.org/@CENTOS_VERSION@/updates/$basearch/
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 exclude=ocaml*
-enabled=1
+enabled=0
 
 [C@CENTOS_VERSION@-extras]
 name=CentOS-@CENTOS_VERSION@ - Extras
@@ -20,7 +20,7 @@ baseurl=http://vault.centos.org/@CENTOS_VERSION@/extras/$basearch/
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 exclude=ocaml*
-enabled=1
+enabled=0
 
 [C@CENTOS_VERSION@-base-source]
 name=CentOS-@CENTOS_VERSION@ - Base

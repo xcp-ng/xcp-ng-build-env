@@ -10,6 +10,8 @@ ARG     CENTOS_VERSION
 COPY    files/CentOS-Vault.repo.in /etc/yum.repos.d/CentOS-Vault-7.5.repo
 RUN     sed -i -e "s/@CENTOS_VERSION@/${CENTOS_VERSION}/g" /etc/yum.repos.d/CentOS-Vault-7.5.repo
 
+ENV     UPSTREAM_REPOS="C${CENTOS_VERSION}-base C${CENTOS_VERSION}-updates C${CENTOS_VERSION}-extras"
+
 # Add our repositories
 # Repository file depends on the target version of XCP-ng, and is pre-processed by build.sh
 ARG     XCP_NG_BRANCH=8.3
