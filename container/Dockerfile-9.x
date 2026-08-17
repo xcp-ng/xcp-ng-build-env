@@ -66,9 +66,10 @@ RUN     dnf install -y \
             epel-release
 
 # HACK make sure we are not pointed to one of the RSYNC mirrors, which curl does not support
+# FIXME: should use "&protocol=https" in the metalink URL instead (for non-archive case)
 RUN    sed -i.orig \
     -e s,^metalink,#metalink, \
-    -e s,^#baseurl=https://download.example/pub/epel/.releasever..releasever_minor:+z.,baseurl=http://mirror.in2p3.fr/pub/epel/10.0, \
+    -e s,^#baseurl=https://download.example/pub/epel/.releasever..releasever_minor:+z.,baseurl=https://archives.fedoraproject.org/pub/archive/epel/10.0, \
     /etc/yum.repos.d/epel.repo
 
 # EPEL: needs epel-release installed first
