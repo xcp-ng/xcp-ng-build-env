@@ -55,14 +55,63 @@ like `pipx install --editable .`
 If you do not want this behaviour, use: `uv tool install --from . xcp-ng-dev`
 or `pipx install .`
 
-### updating
+## Container images
+
+Many features of this tool rely on a container image. You can either pull a pre-built
+image from ghcr.io, or build it locally (which requires a local checkout of this git
+repository).
+
+
+### Using the prebuilt images
+
+For convenience, when no image is found on your system, images are pulled from ghcr.io.
+
+You can also explicitly download the latest image for a given XCP-ng version (8.3, 9.0...)
+with `docker pull ghcr.io/xcp-ng/xcp-ng-build-env:8.3` or
+`podman pull ghcr.io/xcp-ng/xcp-ng-build-env:8.3` (replace the version if needed).
+
+As the images are regularly updated, it is recommended to run this from time to time.
+Especially if you see that the images pull a lot of RPM updates each time they start.
+
+### Building the container image(s)
+
+Building your own images is also supported.
+
+Clone this repository (outside any container), then use `./container/build.sh` to
+generate the image. Adapt the version to the wanted release of XCP-ng.
+Note that Docker and Podman store container images separately.
+
+```
+Usage: ./container/build.sh [--platform PF] <version>
+... where <version> is a 'x.y' version such as 8.0.
+```
+
+The build produces `localhost/xcp-ng-build-env:<version>`, a purely local
+name, distinct from the `ghcr.io/xcp-ng/xcp-ng-build-env:<version>` image
+published by CI. The two can coexist for the same version and neither
+overwrites the other.
+
+### Choosing which image is used
+
+`xcp-ng-dev` selects the image for a given version in this order:
+
+1. the image given by `--image`, or by the `XCPNG_CONTAINER_IMAGE`
+   environment variable;
+2. the locally built `localhost/xcp-ng-build-env:<version>`, if present;
+3. the published `ghcr.io/xcp-ng/xcp-ng-build-env:<version>`, pulled if needed.
+
+The selected image is printed on startup, so it is always visible which one a
+run is using. A locally built image is never pulled or refreshed from a
+registry. Rebuild it with `./container/build.sh` to update it.
+
+## updating
 
 Depending on how you installed:
 * with `uv`: just run the same command
 * with `pipx`: run the same command, with `--force`
 * editable with `git`: just update your git working tree
 
-Then download the latest image with `docker pull ghcr.io/xcp-ng/xcp-ng-build-env:8.3` or `podman pull ghcr.io/xcp-ng/xcp-ng-build-env:8.3`.
+Then update your container image(s), as described in "Container images".
 
 ## Completion
 
@@ -78,22 +127,6 @@ To install the completion, add `eval "$(register-python-argcomplete xcp-ng-dev)"
 
 To install the completion, run `register-python-argcomplete --shell fish xcp-ng-dev > ~/.config/fish/completions/xcp-ng-dev.fish` and relaunch fish.
 
-## Building the container image(s)
-
-> [!NOTE]  
-> The images are typically downloaded from ghcr.io for regular usage.
-> Unless you're working on this project, you usually don't need to build the container images yourself.
-
-You need one container image per target version of XCP-ng.
-
-Clone this repository (outside any container), then use `./container/build.sh` to
-generate the image. Adapt the version to the wanted release of XCP-ng.
-Note that Docker and Podman store container images separately.
-
-```
-Usage: ./container/build.sh [--platform PF] <version>
-... where <version> is a 'x.y' version such as 8.0.
-```
 
 ## Using the container
 
