@@ -1,8 +1,9 @@
 [xcpng]
 name=XCP-ng 8.99 test
-baseurl=https://repo.vates.tech/xcp-ng/9/8.99/base/@RPMARCH@/
+baseurl=https://kojihub.xcp-ng.org/kojifiles/repos/v9.0-incoming/latest/@RPMARCH@/
 enabled=1
 gpgcheck=0
 metadata_expire=0
 enabled_metadata=1
 priority=1
+sslverify=0
