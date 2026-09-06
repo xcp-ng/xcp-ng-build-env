@@ -19,7 +19,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/uv-setup/
+      - uses: $/.github/actions/uv-setup/
 
       - name: Build
         run: uv build
