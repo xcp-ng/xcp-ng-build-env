@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           persist-credentials: false
-      - uses: ./.github/actions/uv-setup/
+      - uses: $/.github/actions/uv-setup/
         with:
           sync: false
       - run: uvx zizmor --color=always .

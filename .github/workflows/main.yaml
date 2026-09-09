@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           persist-credentials: true  # required for git lfs
-      - uses: ./.github/actions/uv-setup/
+      - uses: $/.github/actions/uv-setup/
       - name: Test
         # use script to provide a tty (workaround of systematic "docker -t"?)
         shell: 'script -q -e -c "bash {0}"'
