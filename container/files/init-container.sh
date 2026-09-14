@@ -101,7 +101,12 @@ if [ -n "$BUILD_LOCAL" ]; then
             *) echo >&2 "ERROR: unknown release, cannot know package manager"; exit 1 ;;
         esac
 
-        sudo $BDEP "${SPECFLAGS[@]}" -y $specs
+        DEFINEFLAGS=()
+        if [ -n "$RPMBUILD_DEFINE" ]; then
+            DEFINEFLAGS=(--define "$RPMBUILD_DEFINE")
+        fi
+
+        sudo $BDEP "${SPECFLAGS[@]}" "${DEFINEFLAGS[@]}" -y $specs
 
         : ${RPMBUILD_STAGE:=a}  # default if not specified: -ba
         RPMBUILDFLAGS=(
@@ -109,6 +114,7 @@ if [ -n "$BUILD_LOCAL" ]; then
             --target "$RPMARCH"
             $RPMBUILD_OPTS
             "${SPECFLAGS[@]}"
+            "${DEFINEFLAGS[@]}"
         )
         # in case the build deps contain xs-opam-repo, source the added profile.d file
         [ ! -f /etc/profile.d/opam.sh ] || source /etc/profile.d/opam.sh
