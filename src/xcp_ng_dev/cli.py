@@ -9,6 +9,7 @@ Simplifies the creation of a build environment for XCP-ng packages.
 """
 
 import argparse
+import json
 import os
 import shlex
 import shutil
@@ -65,15 +66,24 @@ def get_timezone() -> str:
 
 
 def get_local_image_platform(runner, image):
-    """Return the platform string (e.g. 'linux/amd64') of a local image, or None."""
+    """Return the platform string (e.g. 'linux/amd64' or 'linux/amd64/v2') of a local image, or None."""
     try:
         result = subprocess.run(
-            [runner, "image", "inspect", image,
-             "--format", "{{.Os}}/{{.Architecture}}"],
+            [runner, "image", "inspect", image, "--format", "{{json .}}"],
             capture_output=True, text=True,
         )
         if result.returncode == 0:
-            return result.stdout.strip()
+            info = json.loads(result.stdout)
+            # Fix docker/podman's arch names (i.e. "arm64") to the spelling
+            # used for --platform throughout this tool (i.e., "aarch64")
+            arch_aliases = {"arm64": "aarch64"}
+            arch = arch_aliases.get(info["Architecture"], info["Architecture"])
+            parts = [info["Os"], arch]
+            # podman's image-inspect output has no Variant field at all, unlike docker's
+            if info.get("Variant"):
+                parts.append(info["Variant"])
+            return "/".join(parts)
+
     except Exception:
         pass
     return None
