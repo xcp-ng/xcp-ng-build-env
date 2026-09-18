@@ -20,14 +20,22 @@ usage() {
 Usage: $SELF_NAME [--platform PF] <version>
 ... where <version> is a 'x.y' version such as 8.0.
 
---platform override the default platform for the build container.
---overlay-cache use the image cache instead of rebuilding from scratch.
+--platform  override the default platform for the build container.
+--overlay-cache
+--add-repo NICK:URL
+            add specified URL as a repo. Works with docker too, no bind-mount needed
+--overlay-cache
+            let image builder use its cache for image overlays (don't force --no-cache)
+--bootstrap generate a bootstrap image, needed to build xcp-ng-release.
+--isarpm    (internal) generate an image suitable for the ISARPM build system.
 EOF
 }
 
 PLATFORM=
 EXTRA_ARGS=()
 OVERLAY_CACHE=0
+VARIANT=build
+REPO=
 while [ $# -ge 1 ]; do
     case "$1" in
         --help|-h)
@@ -41,6 +49,17 @@ while [ $# -ge 1 ]; do
             ;;
         --overlay-cache)
             OVERLAY_CACHE=1
+            ;;
+        --bootstrap)
+            VARIANT=bootstrap
+            ;;
+        --isarpm)
+            VARIANT=isarpm
+            ;;
+        --add-repo)
+            [ $# -ge 2 ] || die_usage "$1 needs an argument"
+            REPO="$2"
+            shift
             ;;
         -*)
             die_usage "unknown flag '$1'"
@@ -57,6 +76,12 @@ done
 if [ $OVERLAY_CACHE = 0 ]; then
     EXTRA_ARGS+=(--no-cache)
 fi
+
+case "$1" in
+    8.*)
+        [ $VARIANT = build ] || die "--variant is only supported for XCP-ng 9.0 and newer"
+        ;;
+esac
 
 RUNNER=""
 if [ -n "$XCPNG_OCI_RUNNER" ]; then
@@ -83,7 +108,14 @@ case "$1" in
     9.*)
         DOCKERFILE=Dockerfile-9.x
         ALMA_VERSION=10.0
-        : ${PLATFORM:=linux/amd64/v2}
+        case $(uname -m) in
+            x86_64)
+                : ${PLATFORM:=linux/amd64/v2}
+                ;;
+            aarch64)
+                : ${PLATFORM:=linux/aarch64}
+                ;;
+        esac
         ;;
     8.*)
         DOCKERFILE=Dockerfile-8.x
@@ -94,6 +126,8 @@ case "$1" in
         exit 1
         ;;
 esac
+
+[ -n "$PLATFORM" ] || die "Cannot determine container platform to use, try --platform"
 
 case "$PLATFORM" in
     linux/amd64)
@@ -111,9 +145,81 @@ case "$PLATFORM" in
         ;;
 esac
 
+if [ "$RUNNER" = "podman" ]; then
+    EXTRA_ARGS+=("--security-opt" "label=disable")
+fi
+
+# non-x86_64 builds get an arch suffix on their tag, so they don't overwrite
+# the x86_64 image that most tooling defaults to
+ARCH_SUFFIX=
+case "$RPMARCH" in
+    aarch64)
+        ARCH_SUFFIX=-aarch64
+        ;;
+esac
+
+case $VARIANT in
+    build)
+        TAG=${1}${ARCH_SUFFIX}
+        ;;
+    bootstrap)
+        TAG=${1}-bootstrap${ARCH_SUFFIX}
+        EXTRA_ARGS+=( "--build-arg" "VARIANT=bootstrap" )
+        ;;
+    isarpm)
+        TAG=${1}-isarpm${ARCH_SUFFIX}
+        EXTRA_ARGS+=( "--build-arg" "VARIANT=isarpm" )
+        ;;
+    *)
+        echo >&2 "Unsupported --variant '$VARIANT'"
+        ;;
+esac
+
+# handle --add-repo
+if [ -n "$REPO" ]; then
+    REPONICK=${REPO%%:*}
+    REPOLOC=${REPO#*:}
+    case "$REPOLOC" in
+        http://*|https://*|ftp://*)
+            REPOCONTENT=$(cat <<EOF
+[$REPONICK]
+name=Repository - $REPONICK from $REPOLOC
+baseurl=$REPOLOC
+enabled=1
+repo_gpgcheck=0
+gpgcheck=0
+priority=1
+EOF
+            )
+            EXTRA_ARGS+=(
+                "--build-arg" "EXTRA_REPO_NICK=$REPONICK"
+                "--build-arg" "EXTRA_REPO_CONTENT=$(printf '%s' "$REPOCONTENT" | base64 -w0)"
+            )
+            ;;
+        *)
+            # local directory: bind-mount it in (podman only, needs
+            # bind-mount support in build)
+            REPOCONF=$(mktemp)
+            cat > $REPOCONF <<EOF
+[$REPONICK]
+name=Local repository - $REPONICK from $REPOLOC
+baseurl=file:///local-repos/$REPONICK/
+enabled=1
+repo_gpgcheck=0
+gpgcheck=0
+priority=1
+EOF
+            EXTRA_ARGS+=(
+                "-v" "$REPOCONF:/etc/yum.repos.d/$REPONICK.repo:rw"
+                "-v" "$REPOLOC:/local-repos/$REPONICK:ro"
+            )
+            ;;
+    esac
+fi
+
 "$RUNNER" build \
     --platform "$PLATFORM" \
-    -t ghcr.io/xcp-ng/xcp-ng-build-env:${1} \
+    -t ghcr.io/xcp-ng/xcp-ng-build-env:${TAG} \
     --build-arg XCP_NG_BRANCH=${1} \
     --build-arg RPMARCH="$RPMARCH" \
     --ulimit nofile=1024 \
