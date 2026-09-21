@@ -1,52 +1,104 @@
 # WARNING: when bumping the release, bump the releasever together below
-FROM    ghcr.io/almalinux/10-base:10.0
+FROM    ghcr.io/almalinux/10-minimal:10.0
+
+ARG     VARIANT=build
 
 # pin Almalinux version to avoid upgrade to 10.1+
 RUN     mkdir -p /etc/dnf/vars && echo "10.0" > /etc/dnf/vars/releasever
 
 # Add our repositories
-# temporary bootstrap repository
+# temporary bootstrap repository. Copied unconditionally, then disabled
+# below for non-"build" variants, since COPY has no conditional form.
 COPY    files/xcp-ng-8.99.repo /etc/yum.repos.d/xcp-ng.repo
+
 # Almalinux 10 devel
 COPY    files/Alma10-devel.repo /etc/yum.repos.d/
 
 ARG     RPMARCH=unspecified
-RUN     sed -i -e "s/@RPMARCH@/${RPMARCH}/g" /etc/yum.repos.d/*.repo
+RUN     grep -l "@RPMARCH@" /etc/yum.repos.d/*.repo | xargs sed -i -e "s/@RPMARCH@/${RPMARCH}/g"
 
 # Install GPG key
 RUN     curl -sSf https://xcp-ng.org/RPM-GPG-KEY-xcpng -o /etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
 
+# Optionally add an extra repo, e.g. a private aarch64 mirror until aarch64
+# packages are published to xcp-ng.org (see build.sh's --add-repo NICK:URL).
+# Content is base64-encoded to survive as a single build-arg.
+ARG     EXTRA_REPO_NICK=
+ARG     EXTRA_REPO_CONTENT=
+RUN     if [ -n "${EXTRA_REPO_NICK}" ]; then \
+            echo "${EXTRA_REPO_CONTENT}" | base64 -d > /etc/yum.repos.d/${EXTRA_REPO_NICK}.repo; \
+        fi
+
+# dnf config-manager not available yet?
+# Also disable for aarch64: xcp-ng repo has no aarch64 packages yet
+RUN     if [ "${VARIANT}" != build ] || [ "${RPMARCH}" = "aarch64" ]; then \
+            sed -i -e 's/^enabled=1$/enabled=0/' /etc/yum.repos.d/xcp-ng.repo; \
+        fi
+
+RUN     microdnf -y install dnf
+RUN     dnf --setopt=install_weak_deps=False swap -y coreutils-single @core
+RUN     dnf remove -y \
+        crypto-policies-scripts \
+        iwlwifi-dvm-firmware \
+        iwlwifi-mvm-firmware \
+        kexec-tools \
+        xfsprogs
+
+# things that we don't want installed in the build-env, because they
+# are not in the default install, and that prevents detection of them
+# being dependencies of other packages (should not be necessary with
+# dnf-bridge)
+RUN     dnf remove -y \
+        amd-gpu-firmware \
+        hwdata \
+        initscripts-rename-device \
+        intel-gpu-firmware \
+        iproute \
+        linux-firmware \
+        linux-firmware-whence \
+        pciutils-libs
+
 # Update
-RUN     dnf update -y \
-        # Common build requirements
-        && dnf install -y \
+RUN     dnf update -y
+
+# Common build requirements
+RUN     dnf install -y \
             gcc \
             gcc-c++ \
             git \
+            git-lfs \
             make \
             rpm-build \
             redhat-rpm-config \
             python3-rpm \
             sudo \
             dnf-plugins-core \
-            epel-release \
-        # EPEL: needs epel-release installed first
-        && dnf install -y \
+            epel-release
+
+# Restrict the EPEL metalink to https mirrors: some of the mirrors it returns
+# are rsync-only, which curl does not support
+RUN     sed -i -e '/^metalink=/ s/$/\&protocol=https/' /etc/yum.repos.d/epel.repo
+
+# EPEL: needs epel-release installed first
+RUN     dnf install -y \
             epel-rpm-macros \
-            almalinux-git-utils \
-        # Niceties
-        && dnf install -y \
+            almalinux-git-utils
+
+# Niceties
+RUN     dnf install -y \
             bash-completion \
             vim \
             wget \
-            which \
-        # -release*, to be commented out to boostrap the build-env until it gets built
-        # FIXME: isn't it already pulled as almalinux-release when available?
-        && dnf install -y \
-            xcp-ng-release \
-            xcp-ng-release-presets \
-        # clean package cache to avoid download errors
-        && yum clean all
+            which
+
+# clean package cache to avoid download errors
+RUN     yum clean all
+
+# Not auto-pulled via obsoletes: almalinux-release updates faster than xcp-ng-release tracks it
+RUN     if [ ${VARIANT} != bootstrap ]; then \
+            dnf install -y \
+            xcp-ng-release; \
+        fi
 
 # enable repositories commonly required to build
 RUN     dnf config-manager --enable crb
@@ -61,7 +113,8 @@ RUN     groupadd -g 1000 builder \
         && echo "builder ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 RUN     mkdir -p /usr/local/bin
-RUN     curl -fsSL "https://github.com/tianon/gosu/releases/download/1.17/gosu-amd64" -o /usr/local/bin/gosu \
+RUN     GOSU_ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') \
+        && curl -fsSL "https://github.com/tianon/gosu/releases/download/1.17/gosu-${GOSU_ARCH}" -o /usr/local/bin/gosu \
         && chmod +x /usr/local/bin/gosu
 COPY    files/init-container.sh /usr/local/bin/init-container.sh
 COPY    files/entrypoint.sh /usr/local/bin/entrypoint.sh

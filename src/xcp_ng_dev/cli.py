@@ -11,6 +11,7 @@ Simplifies the creation of a build environment for XCP-ng packages.
 import argparse
 import json
 import os
+import platform
 import shlex
 import shutil
 import subprocess
@@ -102,16 +103,19 @@ def add_common_args(parser):
     group.add_argument('-d', '--dir', action='append', type=dir_path,
                        help='Local dir to mount in the '
                        'image. Will be mounted at /external/<dirname>')
-    group.add_argument('-a', '--enablerepo',
+    group.add_argument('-a', '--enablerepo', action='append',
                        help='additional repositories to enable before installing build dependencies. '
                        'Same syntax as yum\'s --enablerepo parameter. Available additional repositories: '
                        'check files/xcp-ng.repo.*.x.in.')
-    group.add_argument('--disablerepo',
+    group.add_argument('--disablerepo', action='append',
                        help='disable repositories. Same syntax as yum\'s --disablerepo parameter. '
                        'If both --enablerepo and --disablerepo are set, --disablerepo will be applied first')
     group.add_argument('-U', '--enable-upstream-repos', action='store_true', help='enable the upstream repositories')
     group.add_argument('--no-update', action='store_true',
                        help='do not run "yum update" on container start, use it as it was at build time')
+    group.add_argument('--variant', choices=['bootstrap', 'isarpm'],
+                       help='use a variant build-env: "bootstrap" is able to build xcp-ng-release.'
+                       '"isarpm" (internal) is suitable for the ISARPM build system')
     group.add_argument('--no-network', action='store_true',
                        help='disable all networking support in the build environment')
 
@@ -284,9 +288,9 @@ def container(args):
     if args.enable_upstream_repos:
         docker_args += ["-e", "ENABLE_UPSTREAM_REPOS=true"]
     if args.enablerepo:
-        docker_args += ["-e", "ENABLEREPO=%s" % args.enablerepo]
+        docker_args += ["-e", "ENABLEREPO=%s" % ','.join(args.enablerepo)]
     if args.disablerepo:
-        docker_args += ["-e", "DISABLEREPO=%s" % args.disablerepo]
+        docker_args += ["-e", "DISABLEREPO=%s" % ','.join(args.disablerepo)]
     if args.no_update:
         docker_args += ["-e", "NOUPDATE=1"]
     if args.no_network:
@@ -315,22 +319,43 @@ def container(args):
     if not ulimit_nofile:
         docker_args += ["--ulimit", "nofile=%s" % DEFAULT_ULIMIT_NOFILE]
 
-    docker_arch = args.platform or ("linux/amd64/v2"
-                                    if args.container_version == "9.0"
-                                    else "linux/amd64")
+    match platform.machine():
+        case 'x86_64':
+            DEFAULT_PLATFORM = ("linux/amd64/v2"
+                                if args.container_version == "9.0"
+                                else "linux/amd64")
+        case 'aarch64':
+            DEFAULT_PLATFORM = "linux/aarch64"
+        case arch:
+            print(f"Note: no default container platform known for {arch}", file=sys.stderr)
+            DEFAULT_PLATFORM = None
 
-    image_name = f"{CONTAINER_PREFIX}:{args.container_version}"
+    docker_arch = args.platform or DEFAULT_PLATFORM
+    if not docker_arch:
+        raise Exception("cannot determine container platform to use")
+
+    tag = args.container_version
+    if args.variant:
+        tag += f"-{args.variant}"
+    if docker_arch == "linux/aarch64":
+        # non-x86_64 images get an arch suffix so they don't overwrite the
+        # x86_64 tag most tooling defaults to (see container/build.sh)
+        tag += "-aarch64"
+
+    image_name = f"{CONTAINER_PREFIX}:{tag}"
     if args.pull is not None:
         pull_policy = args.pull
     elif get_local_image_platform(RUNNER, image_name) == docker_arch:
         pull_policy = "never"
     else:
         pull_policy = "always"
+
     docker_args += ["--platform", docker_arch]
     docker_args += ["--pull", pull_policy]
 
     if args.debug:
         docker_args += ["-e", "SCRIPT_DEBUG=1"]
+        docker_args += ["--log-level=debug"]
 
     # Some build systems try to re-open /dev/stderr (->
     # /dev/pts/0), so make sure pseudo-tty can be attached to
@@ -378,7 +403,7 @@ def container(args):
     docker_args += ["-e", f"TZ={get_timezone()}"]
 
     # exec "docker run"
-    docker_args += [f"{CONTAINER_PREFIX}:{args.container_version}",
+    docker_args += [image_name,
                     "/usr/local/bin/init-container.sh"]
     print("Launching docker with args %s" % docker_args, file=sys.stderr)
     return subprocess.call(docker_args)
