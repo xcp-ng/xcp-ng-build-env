@@ -27,8 +27,11 @@ case "$OS_RELEASE" in
 esac
 
 if [ -n "$XCPREL" ]; then
-    curl -s https://koji.xcp-ng.org/repos/user/${XCPREL}/xcpng-users.repo |
-        sed '/^gpgkey=/ ipriority=1' | sudo tee /etc/yum.repos.d/xcp-ng-users.repo > /dev/null
+    TMPFILE=$(mktemp)
+    curl --silent --fail https://koji.xcp-ng.org/repos/user/${XCPREL}/xcpng-users.repo -o "$TMPFILE"
+    sed -i -e '/^gpgkey=/ ipriority=1' "$TMPFILE"
+    sudo cp "$TMPFILE" /etc/yum.repos.d/xcp-ng-users.repo
+    rm "$TMPFILE"
 fi
 
 # yum or dnf?
