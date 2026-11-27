@@ -10,8 +10,19 @@ COPY    files/xcp-ng-8.99.repo /etc/yum.repos.d/xcp-ng.repo
 # Almalinux 10 devel
 COPY    files/Alma10-devel.repo /etc/yum.repos.d/
 
-ARG     RPMARCH=unspecified
-RUN     grep -l "@RPMARCH@" /etc/yum.repos.d/*.repo | xargs sed -i -e "s/@RPMARCH@/${RPMARCH}/g"
+# RPMARCH: explicitly passed for local builds (via build.sh), or derived from
+# TARGETARCH for multi-platform buildx builds (CI).
+# For 9.x: amd64 always means x86_64_v2 (requires AVX2), arm64 means aarch64.
+ARG     TARGETARCH
+ARG     RPMARCH=
+RUN     if [ -z "$RPMARCH" ]; then \
+            case "${TARGETARCH}" in \
+                amd64) RPMARCH="x86_64_v2" ;; \
+                arm64) RPMARCH="aarch64" ;; \
+                *) echo "Unknown TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
+            esac; \
+        fi && \
+        grep -l "@RPMARCH@" /etc/yum.repos.d/*.repo | xargs sed -i -e "s/@RPMARCH@/${RPMARCH}/g"
 
 # Install GPG key
 RUN     curl -sSf https://xcp-ng.org/RPM-GPG-KEY-xcpng -o /etc/pki/rpm-gpg/RPM-GPG-KEY-xcpng
@@ -27,7 +38,8 @@ RUN     if [ -n "${EXTRA_REPO_NICK}" ]; then \
 
 # dnf config-manager not available yet?
 # Disable for aarch64: xcp-ng repo has no aarch64 packages yet
-RUN     if [ "${RPMARCH}" = "aarch64" ]; then \
+# Check both explicit RPMARCH and TARGETARCH (for multi-platform builds)
+RUN     if [ "${RPMARCH}" = "aarch64" ] || [ "${TARGETARCH}" = "arm64" ]; then \
             sed -i -e 's/^enabled=1$/enabled=0/' /etc/yum.repos.d/xcp-ng.repo; \
         fi
 
@@ -91,8 +103,10 @@ RUN     yum clean all
 
 # -release*, to be commented out to boostrap the build-env until it gets built
 # FIXME: isn't it already pulled as almalinux-release when available?
-RUN     dnf install -y \
-            xcp-ng-release
+# Skip for aarch64: xcp-ng repo has no aarch64 packages yet
+RUN     if [ "${RPMARCH}" != "aarch64" ] && [ "${TARGETARCH}" != "arm64" ]; then \
+            dnf install -y xcp-ng-release; \
+        fi
 
 # enable repositories commonly required to build
 RUN     dnf config-manager --enable crb
