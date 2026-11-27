@@ -132,6 +132,17 @@ case "$PLATFORM" in
         ;;
 esac
 
+# Local builds: use arch suffix so different platforms don't overwrite each other.
+# (CI uses OCI manifest lists instead, where a single tag contains all platforms.)
+case "$RPMARCH" in
+    x86_64|x86_64_v2)
+        TAG=${1}
+        ;;
+    *)
+        TAG=${1}-${RPMARCH}
+        ;;
+esac
+
 if [ "$RUNNER" = "podman" ]; then
     EXTRA_ARGS+=("--security-opt" "label=disable")
 fi
@@ -182,7 +193,7 @@ fi
 
 "$RUNNER" build \
     --platform "$PLATFORM" \
-    -t ghcr.io/xcp-ng/xcp-ng-build-env:${1} \
+    -t ghcr.io/xcp-ng/xcp-ng-build-env:${TAG} \
     --build-arg XCP_NG_BRANCH=${1} \
     --build-arg RPMARCH="$RPMARCH" \
     --ulimit nofile=1024 \

@@ -68,31 +68,40 @@ jobs:
           platforms: |
             linux/amd64
 
-  # TODO: uncomment once we have a public xcp-ng 9.0 repository
-  # xcp-ng-build-env-90:
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     packages: write # Required to push packages to GHCR
-  #   steps:
-  #     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
-  #       with:
-  #         persist-credentials: false
-  #     - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
-  #       with:
-  #         driver: docker-container
-  #     - uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1
-  #       if: github.ref == 'refs/heads/master'
-  #       with:
-  #         registry: ghcr.io
-  #         username: ${{ github.actor }} # Uses the GitHub user/org name that triggered the workflow
-  #         password: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub
-  #     - uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
-  #       with:
-  #         context: ./container
-  #         file: ./container/Dockerfile-9.x
-  #         platforms: |
-  #           linux/amd64/v2
-  #         push: ${{ github.ref == 'refs/heads/master' }}
-  #         tags: ghcr.io/${{ github.repository }}:9.0
-  #         cache-from: type=gha,scope=${{ github.ref_name }}-90 # Cache layers to speed up builds
-  #         cache-to: type=gha,mode=max,scope=${{ github.ref_name }}-90 # Store layers in cache for future builds
+  # Multi-platform build: creates an OCI manifest list with both architectures
+  # so a single tag works on x86_64 and arm64 hosts.
+  xcp-ng-build-env-90:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write # Required to push packages to GHCR
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          persist-credentials: false
+      # QEMU is required for cross-architecture builds (arm64 on x86_64 runner)
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130
+        with:
+          platforms: arm64
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
+        with:
+          driver: docker-container
+      - uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1
+        if: github.ref == 'refs/heads/master'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }} # Uses the GitHub user/org name that triggered the workflow
+          password: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub
+      - uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
+        with:
+          context: ./container
+          file: ./container/Dockerfile-9.x
+          # Multi-platform: buildx builds both and creates a manifest list
+          platforms: |
+            linux/amd64/v2
+            linux/arm64
+          push: ${{ github.ref == 'refs/heads/master' }}
+          tags: ghcr.io/${{ github.repository }}:9.0
+          cache-from: type=gha,scope=${{ github.ref_name }}-90 # Cache layers to speed up builds
+          cache-to: type=gha,mode=max,scope=${{ github.ref_name }}-90 # Store layers in cache for future builds
+          build-args: |
+            XCP_NG_BRANCH=9.0
